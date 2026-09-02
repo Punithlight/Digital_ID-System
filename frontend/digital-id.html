@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MH Digital ID | My Digital ID Card</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- QR code library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        body { background: #f8f9fc; font-family: Arial, sans-serif; }
+
+        .page-wrap { max-width: 1000px; margin: 0 auto; padding: 36px 20px 60px; }
+
+        /* top nav bar */
+        .top-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        .top-nav .back-btn {
+            display: flex; align-items: center; gap: 8px;
+            color: #374151; font-size: 14px; font-weight: 600;
+            text-decoration: none; padding: 9px 16px;
+            border: 1.5px solid #e5e7eb; border-radius: 10px;
+            transition: 0.2s; background: #fff;
+        }
+        .top-nav .back-btn:hover { border-color: #0d6efd; color: #0d6efd; }
+        .top-nav .title-block h1 { font-size: 22px; font-weight: 700; color: #1f2937; margin: 0; }
+        .top-nav .title-block p  { font-size: 13px; color: #6b7280; margin: 0; }
+        .action-row { display: flex; gap: 10px; }
+        .btn-outline-custom {
+            display: flex; align-items: center; gap: 7px;
+            padding: 9px 18px; border: 1.5px solid #e5e7eb;
+            border-radius: 10px; background: #fff;
+            font-size: 13px; font-weight: 600; color: #374151;
+            cursor: pointer; transition: 0.2s; text-decoration: none;
+        }
+        .btn-outline-custom:hover { border-color: #0d6efd; color: #0d6efd; }
+        .btn-primary-custom {
+            display: flex; align-items: center; gap: 7px;
+            padding: 9px 20px; border: none;
+            border-radius: 10px; background: linear-gradient(135deg,#0d6efd,#174ea6);
+            font-size: 13px; font-weight: 600; color: #fff;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-primary-custom:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(13,110,253,0.3); }
+
+        /* ── The ID Card ── */
+        #printArea {
+            background: #fff;
+            border-radius: 22px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.09);
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        /* card top — dark gradient */
+        .card-top {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #2563eb 100%);
+            padding: 32px 36px 28px;
+            position: relative; overflow: hidden;
+            display: flex; align-items: flex-start; justify-content: space-between;
+        }
+        .card-top::before {
+            content: ""; position: absolute;
+            width: 350px; height: 350px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.06);
+            right: -100px; top: -100px;
+        }
+        .card-top::after {
+            content: ""; position: absolute;
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.04);
+            left: -50px; bottom: -70px;
+        }
+        .card-company {
+            color: #fff;
+        }
+        .card-company .co-name {
+            font-size: 20px; font-weight: 800; letter-spacing: 1px;
+        }
+        .card-company .co-sub {
+            font-size: 11px; opacity: 0.5; letter-spacing: 1.5px;
+            text-transform: uppercase; margin-top: 2px;
+        }
+        .card-logo-circle {
+            width: 52px; height: 52px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 20px; font-weight: 800;
+            flex-shrink: 0; z-index: 1;
+        }
+
+        /* card bottom — white */
+        .card-bottom {
+            padding: 28px 36px 32px;
+        }
+        .card-profile-row {
+            display: flex; align-items: center; gap: 26px;
+            margin-bottom: 26px;
+        }
+        .profile-pic-wrap {
+            position: relative; flex-shrink: 0;
+        }
+        .profile-pic {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            border: 4px solid #e5e7eb;
+            background: #f3f4f6;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 38px; color: #9ca3af;
+            overflow: hidden;
+        }
+        .profile-pic img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-status {
+            position: absolute; bottom: 4px; right: 4px;
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        .profile-status.active   { background: #16a34a; }
+        .profile-status.inactive { background: #ef4444; }
+
+        .emp-name  { font-size: 24px; font-weight: 800; color: #1f2937; }
+        .emp-role  { font-size: 14px; color: #4b5563; margin-top: 3px; font-weight: 600; }
+        .emp-dept  { font-size: 13px; color: #9ca3af; margin-top: 2px; }
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+            margin-top: 8px;
+        }
+        .status-pill.active   { background: rgba(22,163,74,0.1);  color: #16a34a; }
+        .status-pill.inactive { background: rgba(239,68,68,0.1);  color: #ef4444; }
+
+        /* ID fields grid */
+        .id-fields-grid {
+            display: grid; grid-template-columns: repeat(3,1fr); gap: 16px;
+            padding: 22px 24px;
+            background: #f9fafb; border-radius: 14px;
+            margin-bottom: 22px;
+        }
+        .id-field .lbl { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; }
+        .id-field .val { font-size: 15px; font-weight: 700; color: #1f2937; margin-top: 3px; }
+        .id-field .val.highlight {
+            font-size: 18px; color: #0d6efd; letter-spacing: 1px;
+        }
+
+        /* QR + barcode row */
+        .qr-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; flex-wrap: wrap;
+        }
+        .qr-box {
+            background: #fff; border: 1.5px solid #e5e7eb;
+            border-radius: 14px; padding: 14px;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .qr-box .qr-label { font-size: 10px; color: #9ca3af; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
+        #qrCanvas { width: 100px !important; height: 100px !important; }
+
+        .card-footer-strip {
+            background: linear-gradient(135deg,#0f172a,#1e3a5f);
+            padding: 12px 36px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-footer-strip .f-lbl { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px; }
+        .card-footer-strip .f-val { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; }
+
+        /* Profile section below card */
+        .profile-section {
+            background: #fff; border-radius: 18px;
+            padding: 28px 32px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .ps-title {
+            font-size: 15px; font-weight: 700; color: #1f2937;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .ps-title i { color: #0d6efd; }
+        .info-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+        .info-row:last-child { border-bottom: none; }
+        .info-key { font-size: 13px; color: #9ca3af; width: 180px; flex-shrink: 0; }
+        .info-val { font-size: 13px; font-weight: 600; color: #1f2937; }
+
+        /* print styles */
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; }
+            .no-print { display: none !important; }
+        }
+
+        @media (max-width: 600px) {
+            .card-top, .card-bottom { padding: 20px; }
+            .id-fields-grid { grid-template-columns: 1fr 1fr; }
+            .card-footer-strip { padding: 10px 20px; }
+            .top-nav { flex-direction: column; align-items: flex-start; gap: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="background-animation">
+    <span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<div class="page-wrap">
+
+    <!-- Top nav -->
+    <div class="top-nav no-print">
+        <a href="dashboard.html" class="back-btn">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+        <div class="title-block text-center">
+            <h1>My Digital ID</h1>
+            <p>Your official employee identity card</p>
+        </div>
+        <div class="action-row">
+            <button class="btn-outline-custom" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <button class="btn-primary-custom" onclick="downloadCard()">
+                <i class="bi bi-download"></i> Download
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loadingState" style="text-align:center;padding:80px 20px;">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <p style="margin-top:16px;color:#6b7280;">Loading your Digital ID...</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="errorState" style="display:none;text-align:center;padding:60px 20px;">
+        <i class="bi bi-exclamation-triangle" style="font-size:48px;color:#f59e0b;"></i>
+        <h4 style="margin-top:16px;color:#1f2937;">Digital ID Not Found</h4>
+        <p style="color:#6b7280;" id="errorMsg">Please contact HR to set up your Digital ID.</p>
+        <a href="dashboard.html" class="btn-primary-custom" style="text-decoration:none;margin:16px auto 0;display:inline-flex;">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- The ID Card -->
+    <div id="printArea" style="display:none;">
+
+        <!-- Top section -->
+        <div class="card-top">
+            <div class="card-company">
+                <div class="co-name">FLOWDESK</div>
+                <div class="co-sub">Digital Employee ID</div>
+            </div>
+            <div class="card-logo-circle">MH</div>
+        </div>
+
+        <!-- Bottom section -->
+        <div class="card-bottom">
+            <div class="card-profile-row">
+                <div class="profile-pic-wrap">
+                    <div class="profile-pic" id="profilePic">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="profile-status active" id="profileStatus"></div>
+                </div>
+                <div>
+                    <div class="emp-name" id="empName">—</div>
+                    <div class="emp-role" id="empRole">—</div>
+                    <div class="emp-dept" id="empDept">—</div>
+                    <div class="status-pill active" id="empStatusPill">
+                        <i class="bi bi-circle-fill" style="font-size:7px;"></i> ACTIVE
+                    </div>
+                </div>
+            </div>
+
+            <!-- ID fields -->
+            <div class="id-fields-grid">
+                <div class="id-field">
+                    <div class="lbl">Digital ID</div>
+                    <div class="val highlight" id="fieldDigitalId">—</div>
+                </div>
+                <div class="id-field">
+                    <div class="lbl">Employee ID</div>
+                    <div class="val" id="fieldEmpId">—</div>
+                </div>
+                <div class="id-field">
+                    <div class="lbl">Joining Date</div>
+                    <div class="val" id="fieldJoined">—</div>
+                </div>
+                <div class="id-field">
+                    <div class="lbl">Department</div>
+                    <div class="val" id="fieldDept">—</div>
+                </div>
+                <div class="id-field">
+                    <div class="lbl">Designation</div>
+                    <div class="val" id="fieldDesig">—</div>
+                </div>
+                <div class="id-field">
+                    <div class="lbl">Status</div>
+                    <div class="val" id="fieldStatus">—</div>
+                </div>
+            </div>
+
+            <!-- QR Row -->
+            <div class="qr-row">
+                <div class="qr-box">
+                    <div id="qrCanvas"></div>
+                    <div class="qr-label">Scan to Verify</div>
+                </div>
+                <div style="flex:1;padding-left:16px;">
+                    <p style="font-size:12px;color:#9ca3af;line-height:1.7;">
+                        Scan the QR code to verify this employee's identity.
+                        The QR code links to a secure verification page that
+                        does not expose personal information.
+                    </p>
+                    <div style="margin-top:10px;">
+                        <div style="font-size:11px;color:#9ca3af;">Verification URL</div>
+                        <div style="font-size:12px;font-weight:600;color:#0d6efd;word-break:break-all;" id="verifyUrl">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer strip -->
+        <div class="card-footer-strip">
+            <div>
+                <div class="f-lbl">Issued By</div>
+                <div class="f-val">FlowDesk Digital ID System</div>
+            </div>
+            <div>
+                <div class="f-lbl">Valid</div>
+                <div class="f-val">Permanent</div>
+            </div>
+            <div>
+                <div class="f-lbl">Verification</div>
+                <div class="f-val" id="footerVerifId">—</div>
+            </div>
+        </div>
+
+    </div><!-- /printArea -->
+
+    <!-- Profile details -->
+    <div class="profile-section no-print" id="profileSection" style="display:none;">
+        <div class="ps-title"><i class="bi bi-person-lines-fill"></i> Profile Details</div>
+        <div class="info-row">
+            <div class="info-key">Full Name</div>
+            <div class="info-val" id="pFullName">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Official Email</div>
+            <div class="info-val" id="pOfficialEmail">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Personal Email</div>
+            <div class="info-val" id="pPersonalEmail">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Phone</div>
+            <div class="info-val" id="pPhone">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Department</div>
+            <div class="info-val" id="pDept">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Designation</div>
+            <div class="info-val" id="pDesig">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Joining Date</div>
+            <div class="info-val" id="pJoined">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Employee ID</div>
+            <div class="info-val" id="pEmpId">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Digital ID</div>
+            <div class="info-val" id="pDigitalId" style="color:#0d6efd;font-size:16px;letter-spacing:1px;">—</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api';
+
+function formatDate(s) {
+    if (!s) return '—';
+    const d = new Date(s);
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+async function init() {
+    // Auth check
+    try {
+        const r = await fetch(`${API}/auth/me/`, { credentials:'include' });
+        if (!r.ok) { window.location.href = 'index.html'; return; }
+    } catch { window.location.href = 'index.html'; return; }
+
+    // Load digital ID
+    try {
+        const res = await fetch(`${API}/digital-id/my/`, { credentials:'include' });
+        const d   = await res.json();
+
+        if (!res.ok || !d.success) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display   = 'block';
+            document.getElementById('errorMsg').textContent = d.message || 'Digital ID not found.';
+            return;
+        }
+
+        populateCard(d.digital_id);
+
+    } catch (e) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display   = 'block';
+        document.getElementById('errorMsg').textContent = 'Unable to connect to server.';
+    }
+}
+
+function populateCard(id) {
+    // Hide loader, show card + profile
+    document.getElementById('loadingState').style.display  = 'none';
+    document.getElementById('printArea').style.display     = 'block';
+    document.getElementById('profileSection').style.display= 'block';
+
+    // Profile photo
+    if (id.profile_photo) {
+        document.getElementById('profilePic').innerHTML = `<img src="${id.profile_photo}" alt="photo">`;
+    }
+
+    // Status
+    const isActive = id.status === 'ACTIVE';
+    document.getElementById('profileStatus').className = `profile-status ${isActive ? 'active' : 'inactive'}`;
+    const pill = document.getElementById('empStatusPill');
+    pill.textContent = id.status;
+    pill.className   = `status-pill ${isActive ? 'active' : 'inactive'}`;
+
+    // Card top
+    set('empName',     id.full_name);
+    set('empRole',     id.designation);
+    set('empDept',     id.department);
+
+    // ID fields
+    set('fieldDigitalId', id.digital_id_number);
+    set('fieldEmpId',     id.employee_id);
+    set('fieldJoined',    formatDate(id.joining_date));
+    set('fieldDept',      id.department);
+    set('fieldDesig',     id.designation);
+    set('fieldStatus',    id.status);
+
+    // QR code
+    const verifyUrl = `${window.location.origin.replace(':5500','').replace('file://','http://127.0.0.1:5500')}/verify.html?token=${id.verification_token}`;
+    const apiVerifyUrl = `http://127.0.0.1:8000/api/verify/${id.verification_token}/`;
+
+    set('verifyUrl', apiVerifyUrl);
+    set('footerVerifId', id.digital_id_number);
+
+    new QRCode(document.getElementById('qrCanvas'), {
+        text: apiVerifyUrl,
+        width: 100, height: 100,
+        colorDark: '#0f172a', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+    });
+
+    // Profile section
+    set('pFullName',      id.full_name);
+    set('pOfficialEmail', id.official_email || '—');
+    set('pPersonalEmail', id.personal_email || '—');
+    set('pPhone',         id.personal_phone || '—');
+    set('pDept',          id.department);
+    set('pDesig',         id.designation);
+    set('pJoined',        formatDate(id.joining_date));
+    set('pEmpId',         id.employee_id);
+    set('pDigitalId',     id.digital_id_number);
+}
+
+function set(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || '—';
+}
+
+async function downloadCard() {
+    // Simple approach: open print dialog focused on card
+    window.print();
+}
+
+init();
+</script>
+</body>
+</html>

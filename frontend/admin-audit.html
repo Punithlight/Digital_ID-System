@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MH Digital ID | Audit Logs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background:#f8f9fc; font-family:Arial,sans-serif; }
+        .sidebar {
+            position:fixed; top:0; left:0; width:240px; height:100vh;
+            background:linear-gradient(180deg,#111827 0%,#1e3a5f 100%);
+            display:flex; flex-direction:column; z-index:100;
+        }
+        .sidebar-logo { padding:28px 24px 20px; border-bottom:1px solid rgba(255,255,255,0.08); }
+        .sidebar-logo .logo-box {
+            width:42px; height:42px; background:linear-gradient(135deg,#0d6efd,#174ea6);
+            border-radius:11px; display:flex; align-items:center; justify-content:center;
+            color:#fff; font-weight:700; font-size:17px; margin-bottom:10px;
+        }
+        .sidebar-logo h2 { color:#fff; font-size:15px; font-weight:700; margin:0; }
+        .sidebar-logo p  { color:rgba(255,255,255,0.45); font-size:11px; margin:0; }
+        .sidebar-nav { padding:18px 14px; flex:1; overflow-y:auto; }
+        .nav-label { font-size:10px; font-weight:700; letter-spacing:1px; color:rgba(255,255,255,0.3); text-transform:uppercase; padding:10px 10px 6px; }
+        .nav-item {
+            display:flex; align-items:center; gap:12px; padding:11px 14px;
+            border-radius:10px; color:rgba(255,255,255,0.6); font-size:14px;
+            text-decoration:none; transition:0.2s; margin-bottom:2px;
+        }
+        .nav-item i { font-size:17px; width:20px; text-align:center; }
+        .nav-item:hover { background:rgba(255,255,255,0.07); color:#fff; }
+        .nav-item.active { background:rgba(13,110,253,0.18); color:#60a5fa; border-left:3px solid #3b82f6; }
+        .sidebar-footer { padding:16px 14px; border-top:1px solid rgba(255,255,255,0.08); }
+        .user-mini { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; }
+        .user-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#0d6efd,#174ea6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; flex-shrink:0; }
+        .user-name { color:#fff; font-size:13px; font-weight:600; }
+        .user-role { color:rgba(255,255,255,0.4); font-size:11px; }
+
+        .main-content { margin-left:240px; min-height:100vh; }
+        .topbar {
+            background:#fff; border-bottom:1px solid #f1f3f5;
+            padding:16px 32px; display:flex; align-items:center;
+            justify-content:space-between; position:sticky; top:0; z-index:50;
+        }
+        .topbar h3 { font-size:19px; font-weight:700; color:#1f2937; margin:0; }
+        .page-body { padding:28px 32px; }
+
+        /* Stats row */
+        .audit-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+        .astat {
+            background:#fff; border-radius:14px; padding:18px 20px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.05);
+            display:flex; align-items:center; gap:14px;
+        }
+        .astat-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+        .astat-icon.blue  { background:rgba(13,110,253,0.1); color:#0d6efd; }
+        .astat-icon.green { background:rgba(22,163,74,0.1);  color:#16a34a; }
+        .astat-icon.red   { background:rgba(239,68,68,0.1);  color:#ef4444; }
+        .astat-icon.amber { background:rgba(245,158,11,0.1); color:#f59e0b; }
+        .astat-num { font-size:22px; font-weight:700; color:#1f2937; line-height:1; }
+        .astat-lbl { font-size:12px; color:#6b7280; margin-top:2px; }
+
+        /* Filter bar */
+        .filter-bar {
+            background:#fff; border-radius:14px; padding:16px 20px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.05);
+            display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px;
+        }
+        .search-box { flex:1; min-width:200px; position:relative; }
+        .search-box i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:15px; }
+        .search-box input {
+            width:100%; height:40px; border:1.5px solid #e5e7eb; border-radius:10px;
+            padding:0 14px 0 38px; font-size:14px; outline:none; transition:0.3s;
+        }
+        .search-box input:focus { border-color:#0d6efd; box-shadow:0 0 0 3px rgba(13,110,253,0.08); }
+        .filter-sel {
+            height:40px; border:1.5px solid #e5e7eb; border-radius:10px;
+            padding:0 14px; font-size:13px; outline:none; cursor:pointer; background:#fff; min-width:150px; transition:0.3s;
+        }
+        .filter-sel:focus { border-color:#0d6efd; }
+        .btn-export {
+            display:flex; align-items:center; gap:7px; padding:9px 18px;
+            border:1.5px solid #e5e7eb; border-radius:10px; background:#fff;
+            font-size:13px; font-weight:600; color:#374151; cursor:pointer; transition:0.2s;
+        }
+        .btn-export:hover { border-color:#0d6efd; color:#0d6efd; }
+
+        /* Table */
+        .table-card { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.05); overflow:hidden; }
+        .table-card table { width:100%; border-collapse:collapse; }
+        .table-card thead th {
+            background:#f9fafb; padding:12px 16px;
+            font-size:11px; font-weight:700; color:#374151;
+            text-transform:uppercase; letter-spacing:0.5px;
+            border-bottom:1px solid #f1f3f5; white-space:nowrap;
+        }
+        .table-card tbody tr { transition:0.15s; }
+        .table-card tbody tr:hover { background:#fafafa; }
+        .table-card tbody td { padding:12px 16px; border-bottom:1px solid #f9fafb; font-size:13px; color:#374151; vertical-align:middle; }
+        .table-card tbody tr:last-child td { border-bottom:none; }
+
+        .action-badge {
+            padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;
+            white-space:nowrap; display:inline-block;
+        }
+        .action-badge.LOGIN_SUCCESS    { background:rgba(22,163,74,0.1);  color:#16a34a; }
+        .action-badge.LOGIN_FAILED     { background:rgba(239,68,68,0.1);  color:#ef4444; }
+        .action-badge.LOGOUT           { background:rgba(107,114,128,0.1);color:#6b7280; }
+        .action-badge.EMPLOYEE_CREATED { background:rgba(13,110,253,0.1); color:#0d6efd; }
+        .action-badge.EMPLOYEE_UPDATED { background:rgba(245,158,11,0.1); color:#f59e0b; }
+        .action-badge.INTEGRATION_SYNC { background:rgba(99,102,241,0.1); color:#6366f1; }
+        .action-badge.default          { background:rgba(107,114,128,0.1);color:#6b7280; }
+
+        .user-cell { display:flex; align-items:center; gap:8px; }
+        .user-dot {
+            width:28px; height:28px; border-radius:50%;
+            background:linear-gradient(135deg,#0d6efd,#174ea6);
+            display:flex; align-items:center; justify-content:center;
+            color:#fff; font-size:11px; font-weight:700; flex-shrink:0;
+        }
+
+        /* Pagination */
+        .pagination-row {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:14px 20px; border-top:1px solid #f1f3f5; flex-wrap:wrap; gap:10px;
+        }
+        .pagination-info { font-size:13px; color:#9ca3af; }
+        .pagination-btns { display:flex; gap:5px; }
+        .pg-btn {
+            height:32px; padding:0 12px; border:1.5px solid #e5e7eb;
+            border-radius:7px; background:#fff; font-size:13px; color:#374151; cursor:pointer; transition:0.2s;
+        }
+        .pg-btn:hover:not(:disabled) { border-color:#0d6efd; color:#0d6efd; }
+        .pg-btn.active { background:#0d6efd; border-color:#0d6efd; color:#fff; }
+        .pg-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+        @media (max-width:992px) { .sidebar{transform:translateX(-240px);} .sidebar.open{transform:translateX(0);} .main-content{margin-left:0;} }
+        @media (max-width:768px) { .audit-stats{grid-template-columns:1fr 1fr;} .page-body{padding:16px;} }
+        @media (max-width:480px) { .audit-stats{grid-template-columns:1fr;} }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-box">MH</div>
+        <h2>Digital ID</h2>
+        <p>Identity Management</p>
+    </div>
+    <div class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        <a href="digital-id.html" class="nav-item"><i class="bi bi-person-badge"></i> My Digital ID</a>
+        <div class="nav-label">Admin</div>
+        <a href="admin-employees.html" class="nav-item"><i class="bi bi-people"></i> Employees</a>
+        <a href="register.html" class="nav-item"><i class="bi bi-person-plus"></i> Add Employee</a>
+        <a href="admin-audit.html" class="nav-item active"><i class="bi bi-shield-check"></i> Audit Logs</a>
+    </div>
+    <div class="sidebar-footer">
+        <div class="user-mini">
+            <div class="user-avatar" id="sidebarAvatar">?</div>
+            <div>
+                <div class="user-name" id="sidebarName">Loading...</div>
+                <div class="user-role" id="sidebarRole">—</div>
+            </div>
+        </div>
+        <a href="#" onclick="doLogout()" class="nav-item" style="margin-top:6px;">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+</nav>
+
+<!-- Main -->
+<div class="main-content">
+    <div class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn d-lg-none p-0" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div>
+                <h3>Audit Logs</h3>
+                <div style="font-size:12px;color:#9ca3af;">Security and activity history</div>
+            </div>
+        </div>
+        <button class="btn-export" onclick="exportCSV()">
+            <i class="bi bi-download"></i> Export CSV
+        </button>
+    </div>
+
+    <div class="page-body">
+
+        <!-- Stats -->
+        <div class="audit-stats">
+            <div class="astat">
+                <div class="astat-icon blue"><i class="bi bi-list-ul"></i></div>
+                <div><div class="astat-num" id="statTotal">—</div><div class="astat-lbl">Total Events</div></div>
+            </div>
+            <div class="astat">
+                <div class="astat-icon green"><i class="bi bi-box-arrow-in-right"></i></div>
+                <div><div class="astat-num" id="statLogins">—</div><div class="astat-lbl">Successful Logins</div></div>
+            </div>
+            <div class="astat">
+                <div class="astat-icon red"><i class="bi bi-x-circle"></i></div>
+                <div><div class="astat-num" id="statFailed">—</div><div class="astat-lbl">Failed Logins</div></div>
+            </div>
+            <div class="astat">
+                <div class="astat-icon amber"><i class="bi bi-person-plus"></i></div>
+                <div><div class="astat-num" id="statCreated">—</div><div class="astat-lbl">Employees Created</div></div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by user or details..." oninput="onSearch()">
+            </div>
+            <select class="filter-sel" id="actionFilter" onchange="loadLogs(1)">
+                <option value="">All Actions</option>
+                <option value="LOGIN_SUCCESS">Login Success</option>
+                <option value="LOGIN_FAILED">Login Failed</option>
+                <option value="LOGOUT">Logout</option>
+                <option value="EMPLOYEE_CREATED">Employee Created</option>
+                <option value="EMPLOYEE_UPDATED">Employee Updated</option>
+                <option value="INTEGRATION_SYNC">Integration Sync</option>
+            </select>
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>IP Address</th>
+                        <th>Model</th>
+                    </tr>
+                </thead>
+                <tbody id="logsBody">
+                    <tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af;">
+                        <div class="spinner-border text-primary"></div>
+                        <p style="margin-top:10px;">Loading audit logs...</p>
+                    </td></tr>
+                </tbody>
+            </table>
+            <div class="pagination-row" id="paginationRow" style="display:none;">
+                <div class="pagination-info" id="paginationInfo">—</div>
+                <div class="pagination-btns" id="paginationBtns"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api';
+let currentPage = 1, totalPages = 1, totalCount = 0;
+let searchTimer = null;
+let allLogs = [];
+
+async function init() {
+    const r = await fetch(`${API}/auth/me/`, { credentials:'include' });
+    if (!r.ok) { window.location.href = 'index.html'; return; }
+    const d = await r.json();
+    if (!d.user || d.user.role === 'employee') { window.location.href = 'dashboard.html'; return; }
+
+    document.getElementById('sidebarAvatar').textContent = (d.user.name||d.user.email).charAt(0).toUpperCase();
+    document.getElementById('sidebarName').textContent   = d.user.name || d.user.email;
+    document.getElementById('sidebarRole').textContent   = {superadmin:'Super Admin',admin:'HR / Admin',employee:'Employee'}[d.user.role]||d.user.role;
+
+    loadStats();
+    loadLogs(1);
+}
+
+async function loadStats() {
+    try {
+        // Total
+        const r = await fetch(`${API}/audit-logs/?page_size=1`, { credentials:'include' });
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('statTotal').textContent = d.total || 0;
+
+        // Logins
+        const r2 = await fetch(`${API}/audit-logs/?action=LOGIN_SUCCESS&page_size=1`, { credentials:'include' });
+        if (r2.ok) { const d2 = await r2.json(); document.getElementById('statLogins').textContent = d2.total || 0; }
+
+        // Failed
+        const r3 = await fetch(`${API}/audit-logs/?action=LOGIN_FAILED&page_size=1`, { credentials:'include' });
+        if (r3.ok) { const d3 = await r3.json(); document.getElementById('statFailed').textContent = d3.total || 0; }
+
+        // Created
+        const r4 = await fetch(`${API}/audit-logs/?action=EMPLOYEE_CREATED&page_size=1`, { credentials:'include' });
+        if (r4.ok) { const d4 = await r4.json(); document.getElementById('statCreated').textContent = d4.total || 0; }
+    } catch {}
+}
+
+async function loadLogs(page) {
+    currentPage = page;
+    const search = document.getElementById('searchInput').value.trim();
+    const action = document.getElementById('actionFilter').value;
+
+    let url = `${API}/audit-logs/?page=${page}&page_size=20`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (action) url += `&action=${action}`;
+
+    const tbody = document.getElementById('logsBody');
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:#9ca3af;">
+        <div class="spinner-border spinner-border-sm text-primary"></div> Loading...</td></tr>`;
+
+    try {
+        const res = await fetch(url, { credentials:'include' });
+        const d   = await res.json();
+        totalPages = d.pages || 1; totalCount = d.total || 0;
+        allLogs = d.logs || [];
+        renderTable(allLogs);
+        renderPagination();
+    } catch {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#ef4444;">
+            Failed to load logs. Make sure you are logged in as HR/Admin.</td></tr>`;
+    }
+}
+
+function renderTable(logs) {
+    const tbody = document.getElementById('logsBody');
+    if (!logs.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af;">
+            <i class="bi bi-shield" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+            No audit logs found.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = logs.map((log, i) => {
+        const ac = log.action;
+        const badgeCls = ['LOGIN_SUCCESS','LOGIN_FAILED','LOGOUT','EMPLOYEE_CREATED','EMPLOYEE_UPDATED','INTEGRATION_SYNC'].includes(ac) ? ac : 'default';
+        const initials = log.user ? log.user.charAt(0).toUpperCase() : 'S';
+        return `
+        <tr>
+            <td style="color:#9ca3af;font-size:12px;">${log.id}</td>
+            <td style="white-space:nowrap;">
+                <div style="font-size:13px;font-weight:600;color:#1f2937;">${formatDateTime(log.timestamp)}</div>
+            </td>
+            <td>
+                <div class="user-cell">
+                    <div class="user-dot">${initials}</div>
+                    <div style="font-size:12px;color:#374151;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${log.user}</div>
+                </div>
+            </td>
+            <td><span class="action-badge ${badgeCls}">${ac.replace(/_/g,' ')}</span></td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#6b7280;"
+                title="${log.details}">${log.details || '—'}</td>
+            <td style="font-family:monospace;font-size:12px;color:#6b7280;">${log.ip_address || '—'}</td>
+            <td style="font-size:12px;color:#9ca3af;">${log.model_name || '—'}</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderPagination() {
+    const row  = document.getElementById('paginationRow');
+    const info = document.getElementById('paginationInfo');
+    const btns = document.getElementById('paginationBtns');
+    row.style.display = 'flex';
+    info.textContent  = `Page ${currentPage} of ${totalPages} (${totalCount} total events)`;
+
+    let html = `<button class="pg-btn" onclick="loadLogs(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    const start = Math.max(1,currentPage-2), end = Math.min(totalPages,start+4);
+    for (let i=start; i<=end; i++) {
+        html += `<button class="pg-btn ${i===currentPage?'active':''}" onclick="loadLogs(${i})">${i}</button>`;
+    }
+    html += `<button class="pg-btn" onclick="loadLogs(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+    btns.innerHTML = html;
+}
+
+function onSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => loadLogs(1), 400);
+}
+
+function exportCSV() {
+    if (!allLogs.length) { alert('No logs to export.'); return; }
+    const headers = ['ID','Timestamp','User','Action','Details','IP Address','Model'];
+    const rows = allLogs.map(l => [
+        l.id, l.timestamp, l.user, l.action, `"${(l.details||'').replace(/"/g,"'")}"`, l.ip_address||'', l.model_name||''
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type:'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `audit_logs_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+}
+
+function formatDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+async function doLogout() {
+    await fetch(`${API}/auth/logout/`, { method:'POST', credentials:'include' });
+    window.location.href = 'index.html';
+}
+
+init();
+</script>
+</body>
+</html>

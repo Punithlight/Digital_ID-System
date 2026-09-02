@@ -1,0 +1,3 @@
+CREATE DATABASE digital_system_id;
+SHOW DATABASES;
+

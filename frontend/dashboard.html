@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MH Digital ID | Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background: #f8f9fc; font-family: Arial, sans-serif; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 240px; height: 100vh;
+            background: linear-gradient(180deg, #111827 0%, #1e3a5f 100%);
+            display: flex; flex-direction: column;
+            z-index: 100; transition: 0.3s;
+        }
+        .sidebar-logo {
+            padding: 28px 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .sidebar-logo .logo-box {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 17px;
+            margin-bottom: 10px;
+        }
+        .sidebar-logo h2 { color: #fff; font-size: 15px; font-weight: 700; margin: 0; }
+        .sidebar-logo p  { color: rgba(255,255,255,0.45); font-size: 11px; margin: 0; }
+
+        .sidebar-nav { padding: 18px 14px; flex: 1; overflow-y: auto; }
+        .nav-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 1px;
+            color: rgba(255,255,255,0.3); text-transform: uppercase;
+            padding: 10px 10px 6px;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-radius: 10px;
+            color: rgba(255,255,255,0.6); font-size: 14px;
+            text-decoration: none; cursor: pointer;
+            transition: 0.2s; margin-bottom: 2px;
+        }
+        .nav-item i { font-size: 17px; width: 20px; text-align: center; }
+        .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+        .nav-item.active {
+            background: rgba(13,110,253,0.18);
+            color: #60a5fa;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .sidebar-footer {
+            padding: 16px 14px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .user-mini {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 10px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .user-mini:hover { background: rgba(255,255,255,0.07); }
+        .user-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 14px; font-weight: 700; flex-shrink: 0;
+        }
+        .user-name  { color: #fff; font-size: 13px; font-weight: 600; }
+        .user-role  { color: rgba(255,255,255,0.4); font-size: 11px; }
+
+        /* ── Main ── */
+        .main-content { margin-left: 240px; min-height: 100vh; transition: 0.3s; }
+
+        /* ── Top bar ── */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #f1f3f5;
+            padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar h3 { font-size: 19px; font-weight: 700; color: #1f2937; margin: 0; }
+        .topbar-right { display: flex; align-items: center; gap: 14px; }
+        .topbar-btn {
+            width: 38px; height: 38px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px; background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            color: #6b7280; cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .topbar-btn:hover { border-color: #0d6efd; color: #0d6efd; }
+        .notif-dot {
+            position: absolute; top: 6px; right: 6px;
+            width: 8px; height: 8px; background: #ef4444;
+            border-radius: 50%; border: 2px solid #fff;
+        }
+
+        /* ── Page body ── */
+        .page-body { padding: 30px 32px; }
+
+        /* ── Stat cards ── */
+        .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; margin-bottom: 28px; }
+        .stat-card {
+            background: #fff; border-radius: 16px;
+            padding: 22px 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 16px;
+            transition: 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .stat-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .stat-icon.blue  { background: rgba(13,110,253,0.1); color: #0d6efd; }
+        .stat-icon.green { background: rgba(22,163,74,0.1);  color: #16a34a; }
+        .stat-icon.amber { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .stat-icon.red   { background: rgba(239,68,68,0.1);  color: #ef4444; }
+        .stat-num  { font-size: 26px; font-weight: 700; color: #1f2937; line-height: 1; }
+        .stat-lbl  { font-size: 13px; color: #6b7280; margin-top: 3px; }
+        .stat-chg  { font-size: 12px; margin-top: 4px; }
+        .stat-chg.up   { color: #16a34a; }
+        .stat-chg.down { color: #ef4444; }
+
+        /* ── Digital ID card preview ── */
+        .id-card-preview {
+            background: linear-gradient(135deg, #111827 0%, #1e3a5f 60%, #2563eb 100%);
+            border-radius: 20px; color: #fff;
+            padding: 28px 30px; position: relative; overflow: hidden;
+            min-height: 200px;
+        }
+        .id-card-preview::before {
+            content: ""; position: absolute;
+            width: 300px; height: 300px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.06);
+            right: -80px; top: -80px;
+        }
+        .id-card-preview::after {
+            content: ""; position: absolute;
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.06);
+            right: -20px; bottom: -60px;
+        }
+        .id-card-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 20px;
+        }
+        .id-company { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; opacity: 0.6; text-transform: uppercase; }
+        .id-type    { font-size: 13px; font-weight: 700; opacity: 0.9; margin-top: 2px; }
+        .id-status-badge {
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+        }
+        .id-status-badge.active  { background: rgba(22,163,74,0.25); color: #4ade80; }
+        .id-status-badge.inactive{ background: rgba(239,68,68,0.25);  color: #f87171; }
+        .id-body { display: flex; align-items: center; gap: 20px; }
+        .id-photo {
+            width: 72px; height: 72px; border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; overflow: hidden; flex-shrink: 0;
+        }
+        .id-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .id-emp-name { font-size: 20px; font-weight: 700; }
+        .id-emp-role { font-size: 13px; opacity: 0.75; margin-top: 2px; }
+        .id-emp-dept { font-size: 12px; opacity: 0.55; margin-top: 1px; }
+        .id-footer {
+            margin-top: 20px; padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; gap: 28px; flex-wrap: wrap;
+        }
+        .id-field-lbl { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.8px; }
+        .id-field-val { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+        /* ── Section header ── */
+        .section-hdr {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .section-hdr h5 { font-size: 16px; font-weight: 700; color: #1f2937; margin: 0; }
+        .section-hdr a  { font-size: 13px; color: #0d6efd; text-decoration: none; font-weight: 600; }
+
+        /* ── Activity list ── */
+        .activity-list { background: #fff; border-radius: 16px; padding: 8px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .activity-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 13px 20px; border-bottom: 1px solid #f9fafb;
+            transition: 0.2s;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-item:hover { background: #fafafa; }
+        .activity-dot {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+        .activity-dot.blue  { background: rgba(13,110,253,0.1); color: #0d6efd; }
+        .activity-dot.green { background: rgba(22,163,74,0.1);  color: #16a34a; }
+        .activity-dot.amber { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .activity-dot.red   { background: rgba(239,68,68,0.1);  color: #ef4444; }
+        .activity-title { font-size: 13px; font-weight: 600; color: #1f2937; }
+        .activity-sub   { font-size: 12px; color: #9ca3af; margin-top: 1px; }
+        .activity-time  { font-size: 11px; color: #9ca3af; margin-left: auto; white-space: nowrap; }
+
+        /* ── Quick actions ── */
+        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .quick-btn {
+            background: #fff; border: 1.5px solid #e5e7eb;
+            border-radius: 14px; padding: 18px;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 10px; text-decoration: none; transition: 0.2s; cursor: pointer;
+        }
+        .quick-btn:hover { border-color: #0d6efd; box-shadow: 0 4px 16px rgba(13,110,253,0.12); }
+        .quick-btn i { font-size: 24px; color: #0d6efd; }
+        .quick-btn span { font-size: 12px; font-weight: 600; color: #374151; text-align: center; }
+
+        /* ── Loading skeleton ── */
+        .skeleton {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e9eaec 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+        /* ── Responsive ── */
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-240px); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 576px) {
+            .stat-grid { grid-template-columns: 1fr; }
+            .page-body { padding: 20px 16px; }
+            .topbar { padding: 14px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-box">MH</div>
+        <h2>Digital ID</h2>
+        <p>Identity Management</p>
+    </div>
+
+    <div class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item active">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="digital-id.html" class="nav-item">
+            <i class="bi bi-person-badge"></i> My Digital ID
+        </a>
+
+        <div class="nav-label" id="adminNavLabel" style="display:none;">Admin</div>
+        <a href="admin-employees.html" class="nav-item" id="navEmployees" style="display:none;">
+            <i class="bi bi-people"></i> Employees
+        </a>
+        <a href="register.html" class="nav-item" id="navRegister" style="display:none;">
+            <i class="bi bi-person-plus"></i> Add Employee
+        </a>
+        <a href="admin-audit.html" class="nav-item" id="navAudit" style="display:none;">
+            <i class="bi bi-shield-check"></i> Audit Logs
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="user-mini" id="userMini">
+            <div class="user-avatar" id="sidebarAvatar">?</div>
+            <div>
+                <div class="user-name" id="sidebarName">Loading...</div>
+                <div class="user-role" id="sidebarRole">—</div>
+            </div>
+        </div>
+        <a href="#" onclick="doLogout()" class="nav-item" style="margin-top:6px;">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+</nav>
+
+<!-- ── Main ── -->
+<div class="main-content">
+
+    <!-- Top bar -->
+    <div class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="topbar-btn d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <i class="bi bi-list"></i>
+            </button>
+            <div>
+                <h3 id="pageTitle">Dashboard</h3>
+                <div style="font-size:12px;color:#9ca3af;" id="pageSubtitle">Welcome back</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-btn" onclick="window.location.href='digital-id.html'" title="My Digital ID">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div class="topbar-btn" id="notifBtn" title="Notifications">
+                <i class="bi bi-bell"></i>
+                <span class="notif-dot" id="notifDot" style="display:none;"></span>
+            </div>
+            <div class="user-avatar" style="width:38px;height:38px;font-size:14px;cursor:pointer;"
+                 id="topAvatar" onclick="window.location.href='digital-id.html'">?</div>
+        </div>
+    </div>
+
+    <!-- Page body -->
+    <div class="page-body">
+
+        <!-- Stat cards -->
+        <div class="stat-grid" id="statGrid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+                <div>
+                    <div class="stat-num" id="statTotal">—</div>
+                    <div class="stat-lbl">Total Employees</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="bi bi-person-check"></i></div>
+                <div>
+                    <div class="stat-num" id="statActive">—</div>
+                    <div class="stat-lbl">Active</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon amber"><i class="bi bi-person-x"></i></div>
+                <div>
+                    <div class="stat-num" id="statInactive">—</div>
+                    <div class="stat-lbl">Inactive</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="bi bi-qr-code"></i></div>
+                <div>
+                    <div class="stat-num" id="statDigitalIds">—</div>
+                    <div class="stat-lbl">Digital IDs</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Digital ID Card Preview -->
+            <div class="col-12 col-lg-7">
+                <div class="section-hdr">
+                    <h5><i class="bi bi-person-badge me-2" style="color:#0d6efd;"></i>My Digital ID</h5>
+                    <a href="digital-id.html">View Full Card →</a>
+                </div>
+                <div class="id-card-preview" id="idCardPreview">
+                    <div class="id-card-header">
+                        <div>
+                            <div class="id-company">FlowDesk</div>
+                            <div class="id-type">Digital Employee ID</div>
+                        </div>
+                        <div class="id-status-badge active" id="cardStatus">ACTIVE</div>
+                    </div>
+                    <div class="id-body">
+                        <div class="id-photo" id="cardPhoto">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div>
+                            <div class="id-emp-name" id="cardName">Loading...</div>
+                            <div class="id-emp-role" id="cardDesignation">—</div>
+                            <div class="id-emp-dept" id="cardDepartment">—</div>
+                        </div>
+                    </div>
+                    <div class="id-footer">
+                        <div>
+                            <div class="id-field-lbl">Digital ID</div>
+                            <div class="id-field-val" id="cardDigitalId">—</div>
+                        </div>
+                        <div>
+                            <div class="id-field-lbl">Employee ID</div>
+                            <div class="id-field-val" id="cardEmpId">—</div>
+                        </div>
+                        <div>
+                            <div class="id-field-lbl">Joined</div>
+                            <div class="id-field-val" id="cardJoined">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="col-12 col-lg-5">
+                <div class="section-hdr">
+                    <h5><i class="bi bi-lightning me-2" style="color:#0d6efd;"></i>Quick Actions</h5>
+                </div>
+                <div class="quick-grid">
+                    <a href="digital-id.html" class="quick-btn">
+                        <i class="bi bi-person-badge"></i>
+                        <span>View Digital ID</span>
+                    </a>
+                    <a href="register.html" class="quick-btn" id="qaRegister" style="display:none;">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Add Employee</span>
+                    </a>
+                    <a href="admin-employees.html" class="quick-btn" id="qaEmployees" style="display:none;">
+                        <i class="bi bi-people"></i>
+                        <span>Manage Employees</span>
+                    </a>
+                    <a href="verify.html" class="quick-btn">
+                        <i class="bi bi-qr-code-scan"></i>
+                        <span>Verify ID</span>
+                    </a>
+                    <a href="admin-audit.html" class="quick-btn" id="qaAudit" style="display:none;">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Audit Logs</span>
+                    </a>
+                    <a href="#" onclick="doLogout()" class="quick-btn">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="col-12">
+                <div class="section-hdr">
+                    <h5><i class="bi bi-clock-history me-2" style="color:#0d6efd;"></i>Recent Activity</h5>
+                    <a href="admin-audit.html" id="viewAllLogs">View All Logs →</a>
+                </div>
+                <div class="activity-list" id="activityList">
+                    <div class="activity-item">
+                        <div class="activity-dot blue"><i class="bi bi-arrow-clockwise"></i></div>
+                        <div>
+                            <div class="activity-title">Loading activity...</div>
+                            <div class="activity-sub">Please wait</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+const API = 'http://127.0.0.1:8000/api';
+
+async function init() {
+    // Check auth
+    const user = await getCurrentUser();
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    // Set user info
+    const initials = user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase();
+    document.getElementById('sidebarAvatar').textContent = initials;
+    document.getElementById('topAvatar').textContent    = initials;
+    document.getElementById('sidebarName').textContent  = user.name || user.email;
+    document.getElementById('sidebarRole').textContent  = roleLabel(user.role);
+    document.getElementById('pageSubtitle').textContent = `Welcome back, ${(user.name || user.email).split(' ')[0]}`;
+
+    // Show admin nav
+    if (user.role === 'admin' || user.role === 'superadmin') {
+        ['adminNavLabel','navEmployees','navRegister','navAudit',
+         'qaRegister','qaEmployees','qaAudit'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = '';
+        });
+        loadAdminStats();
+    }
+
+    // Load digital ID
+    loadMyDigitalId();
+
+    // Load activity
+    loadActivity(user);
+}
+
+function roleLabel(r) {
+    return { superadmin:'Super Admin', admin:'HR / Admin', employee:'Employee' }[r] || r;
+}
+
+async function getCurrentUser() {
+    try {
+        const res = await fetch(`${API}/auth/me/`, { credentials: 'include' });
+        if (!res.ok) return null;
+        const d = await res.json();
+        return d.success ? d.user : null;
+    } catch { return null; }
+}
+
+async function loadMyDigitalId() {
+    try {
+        const res = await fetch(`${API}/digital-id/my/`, { credentials: 'include' });
+        if (!res.ok) return;
+        const d = await res.json();
+        if (!d.success) return;
+        const id = d.digital_id;
+
+        document.getElementById('cardName').textContent        = id.full_name;
+        document.getElementById('cardDesignation').textContent = id.designation;
+        document.getElementById('cardDepartment').textContent  = id.department;
+        document.getElementById('cardDigitalId').textContent   = id.digital_id_number;
+        document.getElementById('cardEmpId').textContent       = id.employee_id;
+        document.getElementById('cardJoined').textContent      = formatDate(id.joining_date);
+
+        const statusBadge = document.getElementById('cardStatus');
+        statusBadge.textContent = id.status;
+        statusBadge.className   = `id-status-badge ${id.status === 'ACTIVE' ? 'active' : 'inactive'}`;
+
+        if (id.profile_photo) {
+            document.getElementById('cardPhoto').innerHTML = `<img src="${id.profile_photo}" alt="photo">`;
+        }
+
+        // Stats
+        document.getElementById('statDigitalIds').textContent = '1';
+    } catch (e) {}
+}
+
+async function loadAdminStats() {
+    try {
+        const res = await fetch(`${API}/employees/?page_size=1`, { credentials: 'include' });
+        if (!res.ok) return;
+        const d = await res.json();
+        document.getElementById('statTotal').textContent = d.total || 0;
+
+        const res2 = await fetch(`${API}/employees/?status=active&page_size=1`, { credentials: 'include' });
+        if (res2.ok) {
+            const d2 = await res2.json();
+            document.getElementById('statActive').textContent = d2.total || 0;
+        }
+        const res3 = await fetch(`${API}/employees/?status=inactive&page_size=1`, { credentials: 'include' });
+        if (res3.ok) {
+            const d3 = await res3.json();
+            document.getElementById('statInactive').textContent = d3.total || 0;
+        }
+        document.getElementById('statDigitalIds').textContent = d.total || 0;
+    } catch {}
+}
+
+async function loadActivity(user) {
+    const list = document.getElementById('activityList');
+    try {
+        let logs = [];
+        if (user.role === 'admin' || user.role === 'superadmin') {
+            const res = await fetch(`${API}/audit-logs/?page_size=6`, { credentials: 'include' });
+            if (res.ok) {
+                const d = await res.json();
+                logs = d.logs || [];
+            }
+        }
+        if (!logs.length) {
+            list.innerHTML = `<div class="activity-item">
+                <div class="activity-dot green"><i class="bi bi-check-circle"></i></div>
+                <div><div class="activity-title">You are logged in</div>
+                <div class="activity-sub">Session active</div></div>
+                <div class="activity-time">Just now</div></div>`;
+            return;
+        }
+        const colorMap = {
+            LOGIN_SUCCESS: 'green', LOGIN_FAILED: 'red',
+            EMPLOYEE_CREATED: 'blue', EMPLOYEE_UPDATED: 'amber',
+            LOGOUT: 'amber', INTEGRATION_SYNC: 'blue',
+        };
+        const iconMap = {
+            LOGIN_SUCCESS: 'bi-box-arrow-in-right', LOGIN_FAILED: 'bi-x-circle',
+            EMPLOYEE_CREATED: 'bi-person-plus', EMPLOYEE_UPDATED: 'bi-pencil',
+            LOGOUT: 'bi-box-arrow-right', INTEGRATION_SYNC: 'bi-arrow-repeat',
+        };
+        list.innerHTML = logs.map(log => `
+            <div class="activity-item">
+                <div class="activity-dot ${colorMap[log.action] || 'blue'}">
+                    <i class="bi ${iconMap[log.action] || 'bi-activity'}"></i>
+                </div>
+                <div>
+                    <div class="activity-title">${log.action.replace(/_/g,' ')}</div>
+                    <div class="activity-sub">${log.user} — ${log.details || ''}</div>
+                </div>
+                <div class="activity-time">${timeAgo(log.timestamp)}</div>
+            </div>`).join('');
+    } catch {
+        list.innerHTML = `<div class="activity-item"><div class="activity-dot blue"><i class="bi bi-info-circle"></i></div>
+            <div><div class="activity-title">No recent activity</div></div></div>`;
+    }
+}
+
+function timeAgo(iso) {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60)   return `${Math.floor(diff)}s ago`;
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    if (diff < 86400)return `${Math.floor(diff/3600)}h ago`;
+    return `${Math.floor(diff/86400)}d ago`;
+}
+function formatDate(s) {
+    if (!s) return '—';
+    const d = new Date(s);
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+async function doLogout() {
+    await fetch(`${API}/auth/logout/`, { method:'POST', credentials:'include' });
+    window.location.href = 'index.html';
+}
+
+init();
+</script>
+</body>
+</html>

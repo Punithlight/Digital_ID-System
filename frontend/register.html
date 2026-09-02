@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MH Digital ID | Employee Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background: #f8f9fc; font-family: Arial, sans-serif; }
+
+        .reg-container {
+            max-width: 860px;
+            margin: 40px auto;
+            padding: 0 20px 60px;
+        }
+
+        /* top bar */
+        .reg-topbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 36px;
+        }
+        .reg-topbar .logo-box {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 18px;
+        }
+        .reg-topbar h1 {
+            font-size: 22px; font-weight: 700; color: #1f2937; margin: 0;
+        }
+        .reg-topbar p { margin: 0; color: #6b7280; font-size: 13px; }
+
+        /* stepper */
+        .stepper {
+            display: flex;
+            align-items: center;
+            margin-bottom: 36px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .step {
+            display: flex; flex-direction: column;
+            align-items: center; flex: 1; position: relative;
+        }
+        .step:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            top: 18px; left: 60%;
+            width: 80%; height: 2px;
+            background: #e5e7eb;
+            z-index: 0;
+        }
+        .step.completed:not(:last-child)::after { background: #0d6efd; }
+        .step-num {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 2px solid #e5e7eb;
+            background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700;
+            color: #9ca3af; z-index: 1;
+            transition: 0.3s;
+        }
+        .step.active .step-num {
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            border-color: #0d6efd; color: #fff;
+            box-shadow: 0 4px 12px rgba(13,110,253,0.3);
+        }
+        .step.completed .step-num {
+            background: #16a34a; border-color: #16a34a; color: #fff;
+        }
+        .step-label {
+            margin-top: 7px;
+            font-size: 11px; color: #9ca3af;
+            white-space: nowrap;
+        }
+        .step.active .step-label { color: #0d6efd; font-weight: 600; }
+        .step.completed .step-label { color: #16a34a; }
+
+        /* card */
+        .reg-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 38px 42px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.07);
+            animation: cardAppear 0.5s ease forwards;
+        }
+        @keyframes cardAppear {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .section-title {
+            font-size: 19px; font-weight: 700; color: #1f2937;
+            margin-bottom: 6px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 17px;
+        }
+        .section-sub { color: #6b7280; font-size: 13px; margin-bottom: 28px; }
+
+        /* form fields */
+        .field-label {
+            font-size: 13px; font-weight: 600;
+            color: #374151; margin-bottom: 6px;
+        }
+        .field-label span { color: #ef4444; }
+        .field-input {
+            width: 100%; height: 48px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0 14px;
+            font-size: 14px; color: #1f2937;
+            outline: none; transition: 0.3s;
+            background: #fff;
+        }
+        .field-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 4px rgba(13,110,253,0.1);
+        }
+        .field-input.is-invalid { border-color: #ef4444; }
+        select.field-input { cursor: pointer; }
+        textarea.field-input { height: auto; padding: 12px 14px; resize: vertical; }
+        .field-error { font-size: 12px; color: #ef4444; margin-top: 4px; display: none; }
+
+        /* photo upload */
+        .photo-upload {
+            width: 110px; height: 110px;
+            border-radius: 50%;
+            border: 2px dashed #d1d5db;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s;
+            overflow: hidden; position: relative;
+        }
+        .photo-upload:hover { border-color: #0d6efd; }
+        .photo-upload img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-upload .overlay {
+            position: absolute; inset: 0;
+            background: rgba(13,110,253,0.15);
+            display: none; align-items: center; justify-content: center;
+        }
+        .photo-upload:hover .overlay { display: flex; }
+
+        /* nav buttons */
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 36px;
+            padding-top: 24px;
+            border-top: 1px solid #f3f4f6;
+        }
+        .btn-prev {
+            padding: 12px 28px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fff;
+            color: #374151; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-prev:hover { border-color: #0d6efd; color: #0d6efd; }
+        .btn-next {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            color: #fff; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(13,110,253,0.3); }
+        .btn-next:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* review table */
+        .review-table { width: 100%; border-collapse: collapse; }
+        .review-table tr td:first-child {
+            color: #6b7280; font-size: 13px;
+            padding: 9px 0; width: 40%;
+        }
+        .review-table tr td:last-child {
+            font-weight: 600; color: #1f2937; font-size: 13px;
+        }
+        .review-section-head {
+            font-size: 12px; font-weight: 700; color: #0d6efd;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 14px 0 4px; border-bottom: 1px solid #f3f4f6;
+        }
+
+        /* success */
+        .success-box {
+            text-align: center; padding: 20px 0;
+        }
+        .success-icon {
+            width: 90px; height: 90px;
+            background: linear-gradient(135deg,#16a34a,#15803d);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 42px; color: #fff;
+            animation: scaleIn 0.5s ease forwards;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0); } to { transform: scale(1); }
+        }
+        .digital-id-display {
+            background: linear-gradient(135deg,#111827,#2563eb);
+            border-radius: 16px; padding: 22px 30px;
+            color: #fff; display: inline-block;
+            margin: 16px 0; min-width: 280px;
+        }
+        .digital-id-display .label { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+        .digital-id-display .value { font-size: 28px; font-weight: 700; letter-spacing: 2px; }
+        .digital-id-display .emp { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+        @media (max-width: 600px) {
+            .reg-card { padding: 24px 18px; }
+            .stepper { gap: 0; }
+            .step-label { font-size: 9px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="background-animation">
+    <span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<div class="reg-container">
+
+    <!-- Top bar -->
+    <div class="reg-topbar">
+        <div class="logo-box">MH</div>
+        <div>
+            <h1>Employee Onboarding</h1>
+            <p>Register a new employee and generate their Digital ID</p>
+        </div>
+        <a href="index.html" class="ms-auto btn-prev" style="text-decoration:none;">
+            <i class="bi bi-arrow-left"></i> Back to Login
+        </a>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+        <div class="step active" data-step="1">
+            <div class="step-num">1</div>
+            <div class="step-label">Personal</div>
+        </div>
+        <div class="step" data-step="2">
+            <div class="step-num">2</div>
+            <div class="step-label">Contact</div>
+        </div>
+        <div class="step" data-step="3">
+            <div class="step-num">3</div>
+            <div class="step-label">Employment</div>
+        </div>
+        <div class="step" data-step="4">
+            <div class="step-num">4</div>
+            <div class="step-label">Account</div>
+        </div>
+        <div class="step" data-step="5">
+            <div class="step-num">5</div>
+            <div class="step-label">Review</div>
+        </div>
+        <div class="step" data-step="6">
+            <div class="step-num"><i class="bi bi-check-lg"></i></div>
+            <div class="step-label">Done</div>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="reg-card">
+
+        <!-- STEP 1: Personal -->
+        <div id="step-1">
+            <div class="section-title">
+                <i class="bi bi-person"></i> Personal Information
+            </div>
+            <p class="section-sub">Enter the employee's personal details.</p>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-8">
+                    <label class="field-label">Full Name <span>*</span></label>
+                    <input class="field-input" id="full_name" type="text" placeholder="User Full Name">
+                    <div class="field-error" id="err-full_name">Full name is required.</div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="field-label">Profile Photo</label>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+                        <div class="photo-upload" id="photoUpload" onclick="document.getElementById('photoFile').click()">
+                            <i class="bi bi-camera" style="font-size:22px;color:#9ca3af;"></i>
+                            <span style="font-size:10px;color:#9ca3af;margin-top:4px;">Upload</span>
+                            <div class="overlay"><i class="bi bi-pencil" style="color:#0d6efd;font-size:18px;"></i></div>
+                        </div>
+                        <input type="file" id="photoFile" accept="image/*" style="display:none;">
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Date of Birth</label>
+                    <input class="field-input" id="date_of_birth" type="date">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Gender <span>*</span></label>
+                    <select class="field-input" id="gender">
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <div class="field-error" id="err-gender">Please select gender.</div>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <div></div>
+                <button class="btn-next" onclick="goNext(1)">
+                    Next <i class="bi bi-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 2: Contact -->
+        <div id="step-2" style="display:none;">
+            <div class="section-title">
+                <i class="bi bi-envelope"></i> Contact Information
+            </div>
+            <p class="section-sub">Personal contact details — not shared externally.</p>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Personal Email <span>*</span></label>
+                    <input class="field-input" id="personal_email" type="email" placeholder="User Email">
+                    <div class="field-error" id="err-personal_email">Valid email is required.</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Personal Phone</label>
+                    <input class="field-input" id="personal_phone" type="tel" placeholder="+91 9876543210">
+                </div>
+                <div class="col-12">
+                    <label class="field-label">Address</label>
+                    <textarea class="field-input" id="address" rows="3" placeholder="Home address"></textarea>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-prev" onclick="goPrev(2)"><i class="bi bi-arrow-left"></i> Back</button>
+                <button class="btn-next" onclick="goNext(2)">Next <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Employment -->
+        <div id="step-3" style="display:none;">
+            <div class="section-title">
+                <i class="bi bi-briefcase"></i> Employment Information
+            </div>
+            <p class="section-sub">HR-controlled employment details.</p>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Department <span>*</span></label>
+                    <select class="field-input" id="department">
+                        <option value="">Select department</option>
+                    </select>
+                    <div class="field-error" id="err-department">Please select a department.</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Designation <span>*</span></label>
+                    <select class="field-input" id="designation">
+                        <option value="">Select designation</option>
+                    </select>
+                    <div class="field-error" id="err-designation">Please select a designation.</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Joining Date <span>*</span></label>
+                    <input class="field-input" id="joining_date" type="date">
+                    <div class="field-error" id="err-joining_date">Joining date is required.</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Employment Type <span>*</span></label>
+                    <select class="field-input" id="employment_type">
+                        <option value="full_time">Full Time</option>
+                        <option value="part_time">Part Time</option>
+                        <option value="contract">Contract</option>
+                        <option value="intern">Intern</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Official Email <span>*</span></label>
+                    <input class="field-input" id="official_email" type="email" placeholder="name@company.com">
+                    <div class="field-error" id="err-official_email">Valid official email is required.</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Reporting Manager</label>
+                    <select class="field-input" id="reporting_manager">
+                        <option value="">Select manager (optional)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-prev" onclick="goPrev(3)"><i class="bi bi-arrow-left"></i> Back</button>
+                <button class="btn-next" onclick="goNext(3)">Next <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 4: Account -->
+        <div id="step-4" style="display:none;">
+            <div class="section-title">
+                <i class="bi bi-key"></i> Account Setup
+            </div>
+            <p class="section-sub">Set login credentials for the employee.</p>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="field-label">Login Email</label>
+                    <input class="field-input" id="login_email_display" type="email" readonly
+                        style="background:#f9fafb;color:#6b7280;" placeholder="Will use official email">
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+                        <i class="bi bi-info-circle"></i> The official email will be used as login ID.
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Password <span>*</span></label>
+                    <div style="position:relative;">
+                        <input class="field-input" id="password" type="password"
+                            placeholder="Min. 8 characters" style="padding-right:46px;">
+                        <button type="button" onclick="togglePwd('password','eye1')"
+                            style="position:absolute;right:14px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#9ca3af;cursor:pointer;">
+                            <i class="bi bi-eye" id="eye1"></i>
+                        </button>
+                    </div>
+                    <div class="field-error" id="err-password">Password must be at least 8 characters.</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Confirm Password <span>*</span></label>
+                    <div style="position:relative;">
+                        <input class="field-input" id="confirm_password" type="password"
+                            placeholder="Re-enter password" style="padding-right:46px;">
+                        <button type="button" onclick="togglePwd('confirm_password','eye2')"
+                            style="position:absolute;right:14px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#9ca3af;cursor:pointer;">
+                            <i class="bi bi-eye" id="eye2"></i>
+                        </button>
+                    </div>
+                    <div class="field-error" id="err-confirm_password">Passwords do not match.</div>
+                </div>
+                <div class="col-12">
+                    <div id="pwd-strength" style="margin-top:4px;font-size:12px;color:#6b7280;"></div>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-prev" onclick="goPrev(4)"><i class="bi bi-arrow-left"></i> Back</button>
+                <button class="btn-next" onclick="goNext(4)">Review <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- STEP 5: Review -->
+        <div id="step-5" style="display:none;">
+            <div class="section-title">
+                <i class="bi bi-clipboard-check"></i> Review & Submit
+            </div>
+            <p class="section-sub">Please verify all details before submitting.</p>
+
+            <div id="review-content"></div>
+
+            <div id="submitMessage" style="margin-top:16px;"></div>
+
+            <div class="step-nav">
+                <button class="btn-prev" onclick="goPrev(5)"><i class="bi bi-arrow-left"></i> Back</button>
+                <button class="btn-next" id="submitBtn" onclick="submitForm()">
+                    <span id="submitText">Submit & Generate Digital ID</span>
+                    <span id="submitLoader" class="spinner-border spinner-border-sm d-none"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 6: Success -->
+        <div id="step-6" style="display:none;">
+            <div class="success-box">
+                <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+                <h3 style="font-size:22px;font-weight:700;color:#1f2937;margin-bottom:8px;">
+                    Registration Successful!
+                </h3>
+                <p style="color:#6b7280;margin-bottom:20px;">
+                    Employee has been registered and their Digital ID has been generated.
+                </p>
+                <div class="digital-id-display" id="successCard">
+                    <div class="label">Digital ID Number</div>
+                    <div class="value" id="successDigitalId">—</div>
+                    <div class="emp" id="successEmpId">—</div>
+                    <div class="emp" id="successName">—</div>
+                </div>
+                <div style="margin-top:28px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;">
+                    <a href="dashboard.html" class="btn-next" style="text-decoration:none;">
+                        <i class="bi bi-speedometer2"></i> Go to Dashboard
+                    </a>
+                    <button class="btn-prev" onclick="resetForm()">
+                        <i class="bi bi-plus-circle"></i> Register Another
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api';
+let currentStep = 1;
+let departments = [], designations = [], managers = [];
+
+// ─── Load dropdowns ───────────────────────────────────────────────
+async function loadDropdowns() {
+    try {
+        const [dRes, desRes, empRes] = await Promise.all([
+            fetch(`${API}/departments/`, { credentials: 'include' }),
+            fetch(`${API}/designations/`, { credentials: 'include' }),
+            fetch(`${API}/employees/?page_size=200`, { credentials: 'include' }),
+        ]);
+        if (dRes.ok) {
+            const d = await dRes.json();
+            departments = d.departments || [];
+            const sel = document.getElementById('department');
+            departments.forEach(dep => sel.innerHTML += `<option value="${dep.id}">${dep.name}</option>`);
+        }
+        if (desRes.ok) {
+            const d = await desRes.json();
+            designations = d.designations || [];
+        }
+        if (empRes.ok) {
+            const d = await empRes.json();
+            managers = d.employees || [];
+            const sel = document.getElementById('reporting_manager');
+            managers.forEach(m => sel.innerHTML += `<option value="${m.id}">${m.full_name} (${m.employee_id})</option>`);
+        }
+    } catch (e) {
+        console.warn('Could not load dropdowns — make sure you are logged in as admin.');
+    }
+}
+
+document.getElementById('department').addEventListener('change', function() {
+    const depId = parseInt(this.value);
+    const sel = document.getElementById('designation');
+    sel.innerHTML = '<option value="">Select designation</option>';
+    designations.filter(d => !depId || d.department === depId)
+        .forEach(d => sel.innerHTML += `<option value="${d.id}">${d.title}</option>`);
+});
+
+// ─── Photo preview ────────────────────────────────────────────────
+document.getElementById('photoFile').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const box = document.getElementById('photoUpload');
+        box.innerHTML = `<img src="${e.target.result}" alt="photo">
+            <div class="overlay"><i class="bi bi-pencil" style="color:#fff;font-size:18px;"></i></div>`;
+    };
+    reader.readAsDataURL(file);
+});
+
+// ─── Password toggle ──────────────────────────────────────────────
+function togglePwd(id, iconId) {
+    const inp = document.getElementById(id);
+    const icon = document.getElementById(iconId);
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        inp.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+// ─── Password strength ────────────────────────────────────────────
+document.getElementById('password').addEventListener('input', function() {
+    const v = this.value;
+    let strength = 0;
+    if (v.length >= 8) strength++;
+    if (/[A-Z]/.test(v)) strength++;
+    if (/[0-9]/.test(v)) strength++;
+    if (/[^A-Za-z0-9]/.test(v)) strength++;
+    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    const colors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#16a34a'];
+    document.getElementById('pwd-strength').innerHTML = v
+        ? `<span style="color:${colors[strength]}">Password strength: ${labels[strength]}</span>` : '';
+});
+
+// ─── Validation ───────────────────────────────────────────────────
+function showErr(id, msg) {
+    const el = document.getElementById('err-' + id);
+    const inp = document.getElementById(id);
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+    if (inp) inp.classList.add('is-invalid');
+    return false;
+}
+function clearErr(id) {
+    const el = document.getElementById('err-' + id);
+    const inp = document.getElementById(id);
+    if (el) el.style.display = 'none';
+    if (inp) inp.classList.remove('is-invalid');
+}
+
+function validateStep(step) {
+    let valid = true;
+    if (step === 1) {
+        const fn = document.getElementById('full_name').value.trim();
+        const gen = document.getElementById('gender').value;
+        clearErr('full_name'); clearErr('gender');
+        if (!fn) { showErr('full_name', 'Full name is required.'); valid = false; }
+        if (!gen) { showErr('gender', 'Please select gender.'); valid = false; }
+    }
+    if (step === 2) {
+        const em = document.getElementById('personal_email').value.trim();
+        clearErr('personal_email');
+        if (!em || !em.includes('@')) { showErr('personal_email', 'Valid email is required.'); valid = false; }
+    }
+    if (step === 3) {
+        const dep = document.getElementById('department').value;
+        const des = document.getElementById('designation').value;
+        const jd = document.getElementById('joining_date').value;
+        const oe = document.getElementById('official_email').value.trim();
+        clearErr('department'); clearErr('designation'); clearErr('joining_date'); clearErr('official_email');
+        if (!dep) { showErr('department', 'Please select a department.'); valid = false; }
+        if (!des) { showErr('designation', 'Please select a designation.'); valid = false; }
+        if (!jd) { showErr('joining_date', 'Joining date is required.'); valid = false; }
+        if (!oe || !oe.includes('@')) { showErr('official_email', 'Valid official email is required.'); valid = false; }
+    }
+    if (step === 4) {
+        const pwd = document.getElementById('password').value;
+        const cpwd = document.getElementById('confirm_password').value;
+        clearErr('password'); clearErr('confirm_password');
+        if (pwd.length < 8) { showErr('password', 'Password must be at least 8 characters.'); valid = false; }
+        if (pwd !== cpwd) { showErr('confirm_password', 'Passwords do not match.'); valid = false; }
+    }
+    return valid;
+}
+
+// ─── Navigation ───────────────────────────────────────────────────
+function goNext(from) {
+    if (!validateStep(from)) return;
+    if (from === 3) {
+        document.getElementById('login_email_display').value = document.getElementById('official_email').value;
+    }
+    if (from === 4) {
+        buildReview();
+    }
+    setStep(from + 1);
+}
+function goPrev(from) { setStep(from - 1); }
+
+function setStep(n) {
+    document.getElementById(`step-${currentStep}`).style.display = 'none';
+    document.getElementById(`step-${n}`).style.display = 'block';
+    currentStep = n;
+    document.querySelectorAll('.step').forEach(s => {
+        const sn = parseInt(s.dataset.step);
+        s.classList.remove('active', 'completed');
+        if (sn === n) s.classList.add('active');
+        else if (sn < n) s.classList.add('completed');
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── Review ───────────────────────────────────────────────────────
+function val(id) { return document.getElementById(id).value; }
+function label(id) {
+    const el = document.getElementById(id);
+    if (el.tagName === 'SELECT') return el.options[el.selectedIndex]?.text || '—';
+    return el.value || '—';
+}
+
+function buildReview() {
+    const sections = [
+        { title: 'Personal', rows: [
+            ['Full Name', val('full_name')],
+            ['Date of Birth', val('date_of_birth') || '—'],
+            ['Gender', label('gender')],
+        ]},
+        { title: 'Contact', rows: [
+            ['Personal Email', val('personal_email')],
+            ['Personal Phone', val('personal_phone') || '—'],
+            ['Address', val('address') || '—'],
+        ]},
+        { title: 'Employment', rows: [
+            ['Department', label('department')],
+            ['Designation', label('designation')],
+            ['Joining Date', val('joining_date')],
+            ['Employment Type', label('employment_type')],
+            ['Official Email', val('official_email')],
+            ['Reporting Manager', label('reporting_manager')],
+        ]},
+        { title: 'Account', rows: [
+            ['Login Email', val('official_email')],
+            ['Password', '••••••••'],
+        ]},
+    ];
+
+    let html = '<table class="review-table">';
+    sections.forEach(sec => {
+        html += `<tr><td colspan="2" class="review-section-head">${sec.title}</td></tr>`;
+        sec.rows.forEach(([k, v]) => {
+            html += `<tr><td>${k}</td><td>${v}</td></tr>`;
+        });
+    });
+    html += '</table>';
+    document.getElementById('review-content').innerHTML = html;
+}
+
+// ─── Submit ───────────────────────────────────────────────────────
+async function submitForm() {
+    const btn = document.getElementById('submitBtn');
+    const txt = document.getElementById('submitText');
+    const loader = document.getElementById('submitLoader');
+    const msg = document.getElementById('submitMessage');
+
+    btn.disabled = true;
+    txt.textContent = 'Submitting...';
+    loader.classList.remove('d-none');
+    msg.innerHTML = '';
+
+    const payload = {
+        full_name: val('full_name'),
+        date_of_birth: val('date_of_birth') || null,
+        gender: val('gender'),
+        personal_email: val('personal_email'),
+        personal_phone: val('personal_phone'),
+        address: val('address'),
+        department: parseInt(val('department')),
+        designation: parseInt(val('designation')),
+        joining_date: val('joining_date'),
+        employment_type: val('employment_type'),
+        official_email: val('official_email'),
+        reporting_manager: val('reporting_manager') ? parseInt(val('reporting_manager')) : null,
+        password: val('password'),
+    };
+
+    try {
+        const res = await fetch(`${API}/employees/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            document.getElementById('successDigitalId').textContent = data.digital_id || '—';
+            document.getElementById('successEmpId').textContent = `Employee ID: ${data.employee?.employee_id || '—'}`;
+            document.getElementById('successName').textContent = data.employee?.full_name || '—';
+            setStep(6);
+        } else {
+            const errMsg = data.message || JSON.stringify(data.errors || data);
+            msg.innerHTML = `<div class="alert alert-danger">${errMsg}</div>`;
+        }
+    } catch (e) {
+        msg.innerHTML = `<div class="alert alert-danger">Unable to connect to server. Make sure you're logged in as HR/Admin.</div>`;
+    }
+
+    btn.disabled = false;
+    txt.textContent = 'Submit & Generate Digital ID';
+    loader.classList.add('d-none');
+}
+
+function resetForm() {
+    document.querySelectorAll('.field-input').forEach(el => {
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else el.value = '';
+    });
+    document.getElementById('photoUpload').innerHTML = `
+        <i class="bi bi-camera" style="font-size:22px;color:#9ca3af;"></i>
+        <span style="font-size:10px;color:#9ca3af;margin-top:4px;">Upload</span>
+        <div class="overlay"><i class="bi bi-pencil" style="color:#0d6efd;font-size:18px;"></i></div>`;
+    setStep(1);
+}
+
+// Init
+loadDropdowns();
+</script>
+</body>
+</html>

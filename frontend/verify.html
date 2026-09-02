@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MH Digital ID | Verify Employee</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background: #f8f9fc; font-family: Arial, sans-serif; }
+
+        .verify-wrap {
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 30px 20px;
+        }
+        .verify-card {
+            background: #fff; border-radius: 24px;
+            padding: 48px 44px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            width: 100%; max-width: 520px;
+            animation: cardAppear 0.6s ease forwards;
+            text-align: center;
+        }
+        @keyframes cardAppear {
+            from { opacity:0; transform:translateY(24px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .verify-logo {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-bottom: 28px;
+        }
+        .verify-logo .logo-box {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 17px;
+        }
+        .verify-logo h2 { font-size: 18px; font-weight: 700; color: #1f2937; margin: 0; }
+
+        /* manual token input */
+        .token-input-section { margin-bottom: 24px; }
+        .token-input-section .field-label {
+            font-size: 13px; font-weight: 600; color: #374151;
+            margin-bottom: 8px; text-align: left; display: block;
+        }
+        .token-input {
+            width: 100%; height: 52px;
+            border: 1.5px solid #e5e7eb; border-radius: 12px;
+            padding: 0 16px; font-size: 15px; outline: none; transition: 0.3s;
+            text-align: center; letter-spacing: 1px;
+        }
+        .token-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 4px rgba(13,110,253,0.1);
+        }
+        .verify-btn {
+            width: 100%; height: 52px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg,#0d6efd,#174ea6);
+            color: #fff; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .verify-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(13,110,253,0.25); }
+        .verify-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* result */
+        .result-wrap { margin-top: 28px; display: none; }
+
+        .result-icon {
+            width: 80px; height: 80px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; margin: 0 auto 20px;
+            animation: scaleIn 0.4s ease forwards;
+        }
+        @keyframes scaleIn { from{transform:scale(0)}to{transform:scale(1)} }
+        .result-icon.success { background: rgba(22,163,74,0.12); color: #16a34a; }
+        .result-icon.fail    { background: rgba(239,68,68,0.12);  color: #ef4444; }
+
+        .result-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .result-title.success { color: #16a34a; }
+        .result-title.fail    { color: #ef4444; }
+        .result-sub   { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+
+        /* employee result card */
+        .emp-result-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #2563eb 100%);
+            border-radius: 16px; padding: 22px 24px;
+            color: #fff; text-align: left;
+        }
+        .erc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .erc-brand  { font-size: 12px; font-weight: 700; letter-spacing: 1px; opacity: 0.6; text-transform: uppercase; }
+        .erc-badge  {
+            padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+            background: rgba(22,163,74,0.25); color: #4ade80;
+        }
+        .erc-name   { font-size: 20px; font-weight: 700; }
+        .erc-role   { font-size: 13px; opacity: 0.7; margin-top: 2px; }
+        .erc-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+        .erc-field .lbl { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.8px; }
+        .erc-field .val { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+        .divider {
+            display: flex; align-items: center; gap: 10px;
+            margin: 22px 0; color: #9ca3af; font-size: 13px;
+        }
+        .divider::before, .divider::after {
+            content: ""; flex: 1; height: 1px; background: #e5e7eb;
+        }
+
+        @media (max-width: 500px) {
+            .verify-card { padding: 28px 20px; }
+            .erc-fields  { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="background-animation">
+    <span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<div class="verify-wrap">
+    <div class="verify-card">
+
+        <!-- Logo -->
+        <div class="verify-logo">
+            <div class="logo-box">MH</div>
+            <h2>ID Verification</h2>
+        </div>
+
+        <p style="color:#6b7280;font-size:14px;margin-bottom:28px;">
+            Enter a Digital ID number or scan a QR code to verify an employee's identity.
+        </p>
+
+        <!-- Input -->
+        <div class="token-input-section">
+            <label class="field-label">Digital ID Number or Verification Token</label>
+            <input type="text" class="token-input" id="tokenInput"
+                placeholder="e.g. MH00260001 or UUID token">
+        </div>
+
+        <button class="verify-btn" id="verifyBtn" onclick="doVerify()">
+            <span id="verifyText"><i class="bi bi-shield-check"></i> Verify Identity</span>
+            <span id="verifyLoader" class="spinner-border spinner-border-sm d-none"></span>
+        </button>
+
+        <!-- Result -->
+        <div class="result-wrap" id="resultWrap">
+
+            <!-- Success -->
+            <div id="successResult" style="display:none;">
+                <div class="result-icon success"><i class="bi bi-patch-check-fill"></i></div>
+                <div class="result-title success">Identity Verified</div>
+                <div class="result-sub">This is a valid, active Digital ID.</div>
+
+                <div class="emp-result-card">
+                    <div class="erc-header">
+                        <div class="erc-brand">FlowDesk • Digital ID</div>
+                        <div class="erc-badge" id="resBadge">ACTIVE</div>
+                    </div>
+                    <div class="erc-name" id="resName">—</div>
+                    <div class="erc-role" id="resRole">—</div>
+                    <div class="erc-fields">
+                        <div class="erc-field">
+                            <div class="lbl">Digital ID</div>
+                            <div class="val" id="resDigId">—</div>
+                        </div>
+                        <div class="erc-field">
+                            <div class="lbl">Employee ID</div>
+                            <div class="val" id="resEmpId">—</div>
+                        </div>
+                        <div class="erc-field">
+                            <div class="lbl">Department</div>
+                            <div class="val" id="resDept">—</div>
+                        </div>
+                        <div class="erc-field">
+                            <div class="lbl">Joined</div>
+                            <div class="val" id="resJoined">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Failed -->
+            <div id="failResult" style="display:none;">
+                <div class="result-icon fail"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="result-title fail">Verification Failed</div>
+                <div class="result-sub" id="failMsg">Invalid or expired Digital ID.</div>
+            </div>
+
+            <div class="divider">or</div>
+            <button class="verify-btn" onclick="resetVerify()" style="background:#f3f4f6;color:#374151;box-shadow:none;">
+                <i class="bi bi-arrow-clockwise"></i> Verify Another
+            </button>
+        </div>
+
+        <div style="margin-top:24px;">
+            <a href="index.html" style="font-size:13px;color:#0d6efd;text-decoration:none;">
+                <i class="bi bi-arrow-left"></i> Back to Login
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api';
+
+// Auto-fill token from URL params (QR code redirect)
+window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const token  = params.get('token');
+    if (token) {
+        document.getElementById('tokenInput').value = token;
+        doVerify();
+    }
+});
+
+async function doVerify() {
+    const input = document.getElementById('tokenInput').value.trim();
+    if (!input) { alert('Please enter a Digital ID or token.'); return; }
+
+    const btn  = document.getElementById('verifyBtn');
+    const text = document.getElementById('verifyText');
+    const spin = document.getElementById('verifyLoader');
+
+    btn.disabled = true;
+    text.classList.add('d-none');
+    spin.classList.remove('d-none');
+    document.getElementById('resultWrap').style.display = 'none';
+    document.getElementById('successResult').style.display = 'none';
+    document.getElementById('failResult').style.display    = 'none';
+
+    try {
+        // Try as UUID token first, then try as digital ID number
+        let data = null;
+
+        const uuidRx = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRx.test(input)) {
+            const res = await fetch(`${API}/verify/${input}/`);
+            data = await res.json();
+        } else {
+            // Search employee by digital id number — need to check via employees
+            const res = await fetch(`${API}/verify/${input}/`);
+            data = await res.json();
+        }
+
+        document.getElementById('resultWrap').style.display = 'block';
+
+        if (data.verified) {
+            const emp = data.employee;
+            document.getElementById('successResult').style.display = 'block';
+            document.getElementById('resName').textContent   = emp.full_name;
+            document.getElementById('resRole').textContent   = emp.designation;
+            document.getElementById('resDigId').textContent  = emp.digital_id_number;
+            document.getElementById('resEmpId').textContent  = emp.employee_id;
+            document.getElementById('resDept').textContent   = emp.department;
+            document.getElementById('resJoined').textContent = formatDate(emp.joining_date);
+            document.getElementById('resBadge').textContent  = emp.status;
+        } else {
+            document.getElementById('failResult').style.display = 'block';
+            document.getElementById('failMsg').textContent = data.message || 'Invalid Digital ID.';
+        }
+
+    } catch (e) {
+        document.getElementById('resultWrap').style.display  = 'block';
+        document.getElementById('failResult').style.display  = 'block';
+        document.getElementById('failMsg').textContent = 'Connection error. Please try again.';
+    }
+
+    btn.disabled = false;
+    text.classList.remove('d-none');
+    spin.classList.add('d-none');
+}
+
+function resetVerify() {
+    document.getElementById('tokenInput').value = '';
+    document.getElementById('resultWrap').style.display = 'none';
+}
+
+function formatDate(s) {
+    if (!s) return '—';
+    return new Date(s).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+// Enter key triggers verify
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('tokenInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') doVerify();
+    });
+});
+</script>
+</body>
+</html>
