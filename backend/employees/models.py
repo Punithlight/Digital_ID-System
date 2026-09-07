@@ -26,6 +26,12 @@ class Employee(models.Model):
     """Full employee profile — separated from auth (User model)."""
 
     GENDER_CHOICES = [('male', 'Male'), ('female', 'Female'), ('other', 'Other')]
+    BLOOD_GROUP_CHOICES = [
+        ('A+', 'A+'), ('A-', 'A-'),
+        ('B+', 'B+'), ('B-', 'B-'),
+        ('AB+', 'AB+'), ('AB-', 'AB-'),
+        ('O+', 'O+'), ('O-', 'O-'),
+    ]
     EMPLOYMENT_TYPE_CHOICES = [
         ('full_time', 'Full Time'),
         ('part_time', 'Part Time'),
@@ -54,6 +60,7 @@ class Employee(models.Model):
     full_name = models.CharField(max_length=150)
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
+    blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, blank=True)
     profile_photo = models.ImageField(upload_to='employees/photos/', blank=True, null=True)
 
     # Contact information

@@ -32,16 +32,12 @@ def _forbidden(msg="Access denied"):
 
 @csrf_exempt
 def employee_list_create(request):
-    """
-    GET  /api/employees/  — list (admin only)
-    POST /api/employees/  — create employee + digital ID (admin only)
-    """
     if not _is_auth(request):
         return _unauth()
     if not _is_admin(request):
         return _forbidden("HR/Admin access required")
 
-    # ── GET ──
+    # ── GET: list ──────────────────────────────────────────────────
     if request.method == 'GET':
         qs = Employee.objects.select_related('department', 'designation').order_by('-created_at')
 
@@ -68,18 +64,35 @@ def employee_list_create(request):
 
         return JsonResponse({
             "success":   True,
-            "employees": EmployeeListSerializer(page.object_list, many=True).data,
+            "employees": EmployeeListSerializer(page.object_list, many=True, context={'request': request}).data,
             "total":     paginator.count,
             "pages":     paginator.num_pages,
             "page":      page_num,
         })
 
-    # ── POST ──
+    # ── POST: create ───────────────────────────────────────────────
     elif request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({"success": False, "message": "Invalid JSON"}, status=400)
+        content_type = request.content_type or ''
+
+        # Support both multipart (with photo) and JSON (without photo)
+        if 'multipart/form-data' in content_type:
+            data = request.POST.dict()
+            # Convert numeric string IDs to int for serializer
+            for key in ('department', 'designation', 'reporting_manager'):
+                if data.get(key):
+                    try:
+                        data[key] = int(data[key])
+                    except ValueError:
+                        pass
+                elif key == 'reporting_manager':
+                    data[key] = None
+            photo = request.FILES.get('profile_photo')
+        else:
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({"success": False, "message": "Invalid JSON"}, status=400)
+            photo = None
 
         serializer = EmployeeCreateSerializer(data=data)
         if not serializer.is_valid():
@@ -101,6 +114,7 @@ def employee_list_create(request):
                     full_name         = v['full_name'],
                     date_of_birth     = v.get('date_of_birth'),
                     gender            = v.get('gender', ''),
+                    blood_group       = v.get('blood_group', ''),
                     personal_email    = v['personal_email'],
                     personal_phone    = v.get('personal_phone', ''),
                     address           = v.get('address', ''),
@@ -111,6 +125,12 @@ def employee_list_create(request):
                     reporting_manager = v.get('reporting_manager'),
                     official_email    = v['official_email'],
                 )
+
+                # Save photo if provided
+                if photo:
+                    employee.profile_photo = photo
+                    employee.save()
+
                 from digital_id.models import DigitalID
                 digital_id = DigitalID.generate_for(employee)
 
@@ -123,7 +143,7 @@ def employee_list_create(request):
             return JsonResponse({
                 "success":    True,
                 "message":    "Employee created successfully",
-                "employee":   EmployeeDetailSerializer(employee).data,
+                "employee":   EmployeeDetailSerializer(employee, context={'request': request}).data,
                 "digital_id": digital_id.digital_id_number,
             }, status=201)
 
@@ -137,10 +157,6 @@ def employee_list_create(request):
 
 @csrf_exempt
 def employee_detail(request, employee_id):
-    """
-    GET   /api/employees/{employee_id}/  — view (admin or own profile)
-    PATCH /api/employees/{employee_id}/  — update (admin only)
-    """
     if not _is_auth(request):
         return _unauth()
 
@@ -151,36 +167,49 @@ def employee_detail(request, employee_id):
     except Employee.DoesNotExist:
         return JsonResponse({"success": False, "message": "Employee not found"}, status=404)
 
-    # Employees can only see their own record
     if not _is_admin(request):
         own = getattr(request.user, 'employee_profile', None)
         if own is None or own.employee_id != employee_id:
             return _forbidden()
 
     if request.method == 'GET':
-        return JsonResponse({"success": True, "employee": EmployeeDetailSerializer(employee).data})
+        return JsonResponse({
+            "success":  True,
+            "employee": EmployeeDetailSerializer(employee, context={'request': request}).data
+        })
 
     elif request.method == 'PATCH':
         if not _is_admin(request):
             return _forbidden("HR/Admin access required")
 
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({"success": False, "message": "Invalid JSON"}, status=400)
+        content_type = request.content_type or ''
+        if 'multipart/form-data' in content_type:
+            data  = request.POST.dict()
+            photo = request.FILES.get('profile_photo')
+        else:
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({"success": False, "message": "Invalid JSON"}, status=400)
+            photo = None
 
         serializer = EmployeeUpdateSerializer(employee, data=data, partial=True)
         if not serializer.is_valid():
             return JsonResponse({"success": False, "errors": serializer.errors}, status=400)
 
         serializer.save()
+
+        if photo:
+            employee.profile_photo = photo
+            employee.save()
+
         log_action(
             request.user, 'EMPLOYEE_UPDATED', 'Employee',
             object_id=employee.id,
             details=f"Updated {employee.employee_id}",
         )
 
-        # Sync digital ID status when employment_status changes
+        # Sync digital ID status
         if 'employment_status' in data:
             try:
                 from digital_id.models import DigitalID
@@ -193,7 +222,7 @@ def employee_detail(request, employee_id):
         return JsonResponse({
             "success":  True,
             "message":  "Employee updated successfully",
-            "employee": EmployeeDetailSerializer(employee).data,
+            "employee": EmployeeDetailSerializer(employee, context={'request': request}).data,
         })
 
     return JsonResponse({"success": False, "message": "Method not allowed"}, status=405)
@@ -203,7 +232,6 @@ def employee_detail(request, employee_id):
 
 @csrf_exempt
 def department_list(request):
-    """GET /api/departments/ — public list (used in register form dropdowns)."""
     if not _is_auth(request):
         return _unauth()
     depts = Department.objects.all().order_by('name')
@@ -214,7 +242,6 @@ def department_list(request):
 
 @csrf_exempt
 def designation_list(request):
-    """GET /api/designations/ — public list (used in register form dropdowns)."""
     if not _is_auth(request):
         return _unauth()
     designations = Designation.objects.select_related('department').all().order_by('title')

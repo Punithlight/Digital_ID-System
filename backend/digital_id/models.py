@@ -64,6 +64,7 @@ class DigitalID(models.Model):
             "status":             self.status,
             "profile_photo":      photo_url,
             "verification_token": str(self.verification_token),
+            "blood_group":        emp.blood_group or "",
             # Contact — shown on profile page, not on public card
             "personal_email":     emp.personal_email,
             "official_email":     emp.official_email,

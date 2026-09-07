@@ -1,18 +1,9 @@
 """
 Management command: seed_data
 Usage: python manage.py seed_data
-
-Seeds the database with:
-  - Departments
-  - Designations
-  - Super Admin user
-  - Sample HR Admin user
-  - One sample employee with Digital ID
 """
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.utils import timezone
 
 
 class Command(BaseCommand):
@@ -29,23 +20,18 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS('\n✓ Seeding complete!\n'))
 
-    # ── Departments ───────────────────────────────────────────────
-
     def _seed_departments(self):
         from employees.models import Department
         departments = [
-            ('Technology',     'Software and IT teams'),
-            ('Human Resources','HR and Talent team'),
-            ('Finance',        'Finance and Accounts team'),
-            ('Operations',     'Business Operations'),
-            ('Marketing',      'Marketing and Communications'),
+            ('Technology',      'Software and IT teams'),
+            ('Human Resources', 'HR and Talent team'),
+            ('Finance',         'Finance and Accounts team'),
+            ('Operations',      'Business Operations'),
+            ('Marketing',       'Marketing and Communications'),
         ]
         for name, desc in departments:
-            obj, created = Department.objects.get_or_create(name=name, defaults={'description': desc})
-            status = 'created' if created else 'exists'
-            self.stdout.write(f'  Department: {name} [{status}]')
-
-    # ── Designations ──────────────────────────────────────────────
+            _, created = Department.objects.get_or_create(name=name, defaults={'description': desc})
+            self.stdout.write(f'  Department: {name} [{"created" if created else "exists"}]')
 
     def _seed_designations(self):
         from employees.models import Department, Designation
@@ -63,11 +49,8 @@ class Command(BaseCommand):
         ]
         for title, dept_name in desigs:
             dept = Department.objects.filter(name=dept_name).first()
-            obj, created = Designation.objects.get_or_create(title=title, defaults={'department': dept})
-            status = 'created' if created else 'exists'
-            self.stdout.write(f'  Designation: {title} [{status}]')
-
-    # ── Super Admin ───────────────────────────────────────────────
+            _, created = Designation.objects.get_or_create(title=title, defaults={'department': dept})
+            self.stdout.write(f'  Designation: {title} [{"created" if created else "exists"}]')
 
     def _seed_superadmin(self):
         from accounts.models import User
@@ -82,34 +65,42 @@ class Command(BaseCommand):
             last_name='Admin',
             role=User.ROLE_SUPERADMIN,
         )
-        self.stdout.write(self.style.SUCCESS(f'  Super Admin: {email} [created] password=superadmin'))
-
-    # ── HR Admin ──────────────────────────────────────────────────
+        self.stdout.write(self.style.SUCCESS(
+            f'  Super Admin created\n'
+            f'    Email   : {email}\n'
+            f'    Password: superadmin'
+        ))
 
     def _seed_admin(self):
         from accounts.models import User
-        from employees.models import Employee, Department, Designation
-        from digital_id.models import DigitalID
+        from employees.models import Employee
 
         email = 'hr@flowdesk.com'
-        if User.objects.filter(email=email).exists():
-            self.stdout.write(f'  HR Admin: {email} [exists]')
-            # Still create Employee + DigitalID if missing
-            user = User.objects.get(email=email)
-            if not Employee.objects.filter(user=user).exists():
-                self._create_hr_employee(user)
-            return
+        user_exists = User.objects.filter(email=email).exists()
 
-        user = User.objects.create_user(
-            email=email,
-            password='Hr@1234',
-            first_name='HR',
-            last_name='Manager',
-            role=User.ROLE_ADMIN,
-            is_staff=True,
-        )
-        self.stdout.write(self.style.SUCCESS(f'  HR Admin: {email} [created] password=Hr@1234'))
-        self._create_hr_employee(user)
+        if user_exists:
+            self.stdout.write(f'  HR Admin user: {email} [exists]')
+            user = User.objects.get(email=email)
+        else:
+            user = User.objects.create_user(
+                email=email,
+                password='Hr@1234',
+                first_name='HR',
+                last_name='Manager',
+                role=User.ROLE_ADMIN,
+                is_staff=True,
+            )
+            self.stdout.write(self.style.SUCCESS(
+                f'  HR Admin created\n'
+                f'    Email   : {email}\n'
+                f'    Password: Hr@1234'
+            ))
+
+        # Create Employee + DigitalID if not already there
+        if Employee.objects.filter(user=user).exists():
+            self.stdout.write(f'  HR Employee record: [exists]')
+        else:
+            self._create_hr_employee(user)
 
     def _create_hr_employee(self, user):
         from employees.models import Employee, Department, Designation
@@ -122,10 +113,11 @@ class Command(BaseCommand):
             user              = user,
             full_name         = 'HR Manager',
             personal_email    = 'hr.personal@flowdesk.com',
-            personal_phone    = '',
-            address           = '',
-            department        = dept,
-            designation       = desig,
+            personal_phone    = '+91 9000000000',
+            blood_group       = 'O+',
+            address           = 'Bengaluru, Karnataka',
+            department        = 'Human Resources',
+            designation       = 'HR EXECUTIVE',
             joining_date      = '2026-01-01',
             employment_type   = 'full_time',
             official_email    = user.email,

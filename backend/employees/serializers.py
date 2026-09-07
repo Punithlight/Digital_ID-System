@@ -28,7 +28,7 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             'id', 'employee_id', 'full_name', 'personal_email',
             'department_name', 'designation_title',
             'joining_date', 'employment_status', 'employment_type',
-            'profile_photo', 'created_at',
+            'blood_group', 'profile_photo', 'created_at',
         ]
 
     def get_profile_photo(self, obj):
@@ -41,8 +41,8 @@ class EmployeeListSerializer(serializers.ModelSerializer):
 
 
 class EmployeeDetailSerializer(serializers.ModelSerializer):
-    department_name        = serializers.CharField(source='department.name',           read_only=True)
-    designation_title      = serializers.CharField(source='designation.title',         read_only=True)
+    department_name        = serializers.CharField(source='department.name',             read_only=True)
+    designation_title      = serializers.CharField(source='designation.title',           read_only=True)
     reporting_manager_name = serializers.CharField(source='reporting_manager.full_name', read_only=True)
     digital_id_number      = serializers.SerializerMethodField()
     profile_photo          = serializers.SerializerMethodField()
@@ -51,7 +51,7 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
         model  = Employee
         fields = [
             'id', 'employee_id', 'full_name', 'date_of_birth', 'gender',
-            'profile_photo',
+            'blood_group', 'profile_photo',
             'personal_email', 'personal_phone', 'address',
             'department', 'department_name',
             'designation', 'designation_title',
@@ -84,9 +84,13 @@ class EmployeeCreateSerializer(serializers.Serializer):
     gender        = serializers.ChoiceField(
         choices=['male', 'female', 'other'], required=False, allow_blank=True, default=''
     )
+    blood_group   = serializers.ChoiceField(
+        choices=['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+        required=False, allow_blank=True, default=''
+    )
     # Contact
     personal_email = serializers.EmailField()
-    personal_phone = serializers.CharField(max_length=20,  required=False, allow_blank=True)
+    personal_phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
     address        = serializers.CharField(required=False, allow_blank=True)
     # Employment
     department        = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all())
@@ -119,7 +123,7 @@ class EmployeeUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Employee
         fields = [
-            'full_name', 'date_of_birth', 'gender',
+            'full_name', 'date_of_birth', 'gender', 'blood_group',
             'personal_phone', 'address',
             'department', 'designation',
             'employment_type', 'reporting_manager',
