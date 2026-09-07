@@ -347,6 +347,21 @@
                     <label class="field-label">Personal Phone</label>
                     <input class="field-input" id="personal_phone" type="tel" placeholder="+91 9876543210">
                 </div>
+                <div class="col-12 col-md-6">
+                    <label class="field-label">Blood Group <span>*</span></label>
+                    <select class="field-input" id="blood_group">
+                        <option value="">Select blood group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                    <div class="field-error" id="err-blood_group">Please select blood group.</div>
+                </div>
                 <div class="col-12">
                     <label class="field-label">Address</label>
                     <textarea class="field-input" id="address" rows="3" placeholder="Home address"></textarea>
@@ -623,8 +638,10 @@ function validateStep(step) {
     }
     if (step === 2) {
         const em = document.getElementById('personal_email').value.trim();
-        clearErr('personal_email');
+        const bg = document.getElementById('blood_group').value;
+        clearErr('personal_email'); clearErr('blood_group');
         if (!em || !em.includes('@')) { showErr('personal_email', 'Valid email is required.'); valid = false; }
+        if (!bg) { showErr('blood_group', 'Please select blood group.'); valid = false; }
     }
     if (step === 3) {
         const dep = document.getElementById('department').value;
@@ -691,6 +708,7 @@ function buildReview() {
         { title: 'Contact', rows: [
             ['Personal Email', val('personal_email')],
             ['Personal Phone', val('personal_phone') || '—'],
+            ['Blood Group', val('blood_group') || '—'],
             ['Address', val('address') || '—'],
         ]},
         { title: 'Employment', rows: [
@@ -720,45 +738,54 @@ function buildReview() {
 
 // ─── Submit ───────────────────────────────────────────────────────
 async function submitForm() {
-    const btn = document.getElementById('submitBtn');
-    const txt = document.getElementById('submitText');
+    const btn    = document.getElementById('submitBtn');
+    const txt    = document.getElementById('submitText');
     const loader = document.getElementById('submitLoader');
-    const msg = document.getElementById('submitMessage');
+    const msg    = document.getElementById('submitMessage');
 
     btn.disabled = true;
     txt.textContent = 'Submitting...';
     loader.classList.remove('d-none');
     msg.innerHTML = '';
 
-    const payload = {
-        full_name: val('full_name'),
-        date_of_birth: val('date_of_birth') || null,
-        gender: val('gender'),
-        personal_email: val('personal_email'),
-        personal_phone: val('personal_phone'),
-        address: val('address'),
-        department: parseInt(val('department')),
-        designation: parseInt(val('designation')),
-        joining_date: val('joining_date'),
-        employment_type: val('employment_type'),
-        official_email: val('official_email'),
-        reporting_manager: val('reporting_manager') ? parseInt(val('reporting_manager')) : null,
-        password: val('password'),
-    };
+    // Use FormData so profile photo is sent as multipart
+    const fd = new FormData();
+    fd.append('full_name',        val('full_name'));
+    fd.append('date_of_birth',    val('date_of_birth') || '');
+    fd.append('gender',           val('gender'));
+    fd.append('blood_group',      val('blood_group'));
+    fd.append('personal_email',   val('personal_email'));
+    fd.append('personal_phone',   val('personal_phone'));
+    fd.append('address',          val('address'));
+    fd.append('department',       val('department'));
+    fd.append('designation',      val('designation'));
+    fd.append('joining_date',     val('joining_date'));
+    fd.append('employment_type',  val('employment_type'));
+    fd.append('official_email',   val('official_email'));
+    fd.append('password',         val('password'));
+    if (val('reporting_manager')) {
+        fd.append('reporting_manager', val('reporting_manager'));
+    }
+
+    // Attach photo file if selected
+    const photoFile = document.getElementById('photoFile').files[0];
+    if (photoFile) {
+        fd.append('profile_photo', photoFile);
+    }
 
     try {
-        const res = await fetch(`${API}/employees/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        // NOTE: Do NOT set Content-Type header — browser sets it automatically with boundary for multipart
+        const res  = await fetch(`${API}/employees/`, {
+            method:      'POST',
             credentials: 'include',
-            body: JSON.stringify(payload),
+            body:        fd,
         });
         const data = await res.json();
 
         if (res.ok && data.success) {
             document.getElementById('successDigitalId').textContent = data.digital_id || '—';
-            document.getElementById('successEmpId').textContent = `Employee ID: ${data.employee?.employee_id || '—'}`;
-            document.getElementById('successName').textContent = data.employee?.full_name || '—';
+            document.getElementById('successEmpId').textContent     = `Employee ID: ${data.employee?.employee_id || '—'}`;
+            document.getElementById('successName').textContent      = data.employee?.full_name || '—';
             setStep(6);
         } else {
             const errMsg = data.message || JSON.stringify(data.errors || data);

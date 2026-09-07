@@ -138,7 +138,7 @@
 
         /* ID fields grid */
         .id-fields-grid {
-            display: grid; grid-template-columns: repeat(3,1fr); gap: 16px;
+            display: grid; grid-template-columns: repeat(4,1fr); gap: 16px;
             padding: 22px 24px;
             background: #f9fafb; border-radius: 14px;
             margin-bottom: 22px;
@@ -201,8 +201,7 @@
             .id-fields-grid { grid-template-columns: 1fr 1fr; }
             .card-footer-strip { padding: 10px 20px; }
             .top-nav { flex-direction: column; align-items: flex-start; gap: 14px; }
-        }
-    </style>
+        }    </style>
 </head>
 <body>
 
@@ -301,6 +300,14 @@
                     <div class="val" id="fieldDesig">—</div>
                 </div>
                 <div class="id-field">
+                    <div class="lbl">Phone</div>
+                    <div class="val" id="fieldPhone">—</div>
+                </div>
+                <div class="id-field">
+                    <div class="lbl">Blood Group</div>
+                    <div class="val" id="fieldBloodGroup" style="color:#ef4444;font-weight:700;">—</div>
+                </div>
+                <div class="id-field">
                     <div class="lbl">Status</div>
                     <div class="val" id="fieldStatus">—</div>
                 </div>
@@ -362,6 +369,10 @@
         <div class="info-row">
             <div class="info-key">Phone</div>
             <div class="info-val" id="pPhone">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-key">Blood Group</div>
+            <div class="info-val" id="pBloodGroup">—</div>
         </div>
         <div class="info-row">
             <div class="info-key">Department</div>
@@ -432,7 +443,10 @@ function populateCard(id) {
 
     // Profile photo
     if (id.profile_photo) {
-        document.getElementById('profilePic').innerHTML = `<img src="${id.profile_photo}" alt="photo">`;
+        const photoUrl = id.profile_photo.startsWith('http')
+            ? id.profile_photo
+            : `http://127.0.0.1:8000${id.profile_photo}`;
+        document.getElementById('profilePic').innerHTML = `<img src="${photoUrl}" alt="photo">`;
     }
 
     // Status
@@ -453,6 +467,8 @@ function populateCard(id) {
     set('fieldJoined',    formatDate(id.joining_date));
     set('fieldDept',      id.department);
     set('fieldDesig',     id.designation);
+    set('fieldPhone',     id.personal_phone || '—');
+    set('fieldBloodGroup',id.blood_group    || '—');
     set('fieldStatus',    id.status);
 
     // QR code
@@ -479,6 +495,10 @@ function populateCard(id) {
     set('pJoined',        formatDate(id.joining_date));
     set('pEmpId',         id.employee_id);
     set('pDigitalId',     id.digital_id_number);
+
+    // Blood group
+    const bgRow = document.getElementById('pBloodGroup');
+    if (bgRow) bgRow.textContent = id.blood_group || '—';
 }
 
 function set(id, val) {
